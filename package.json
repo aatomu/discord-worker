@@ -1,0 +1,19 @@
+{
+  "name": "discord-worker",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "register": "npx tsx src/commands.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240222.0",
+    "typescript": "^5.0.4",
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "discord-api-types": "^0.37.71",
+    "discord-interactions": "^3.4.0",
+    "node-fetch": "^3.3.2"
+  }
+}
