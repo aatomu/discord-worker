@@ -2,12 +2,8 @@ import fetch from 'node-fetch'
 
 export const commands = [
   {
-    name: 'test',
-    description: 'test Function',
-  },
-  {
-    name: 'invite',
-    description: 'Get an invite link to add the bot to your server',
+    name: 'message',
+    description: 'generate message, learn by channel messages',
   },
 ]
 

@@ -1,12 +1,14 @@
-import * as discord from 'discord-interactions'
-import * as discordInteraction from 'discord-api-types/v10'
+import { verifyKey } from 'discord-interactions'
+import * as discord from 'discord-api-types/v10'
 
 export interface Env {
-  DISCORD_PUBLIC_KEY: string
   DISCORD_TOKEN: string
+  DISCORD_PUBLIC_KEY: string
 }
 
-const entryPoint = 'https://discord.com/api/v10/'
+const entryPoint = 'https://discord.com/api/v10'
+const embedSuccess = 0x00ffff
+const embedError = 0xff0000
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -15,41 +17,63 @@ export default {
       const signature = request.headers.get('x-signature-ed25519')
       const timestamp = request.headers.get('x-signature-timestamp')
       const body = await request.clone().arrayBuffer()
-      const isValidRequest = signature && timestamp && discord.verifyKey(body, signature, timestamp, env.DISCORD_PUBLIC_KEY)
+      const isValidRequest = signature && timestamp && verifyKey(body, signature, timestamp, env.DISCORD_PUBLIC_KEY)
       if (!isValidRequest) {
         console.error('Invalid Request')
         return new Response('Bad request signature.', { status: 401 })
       }
     }
 
-    const interaction: discordInteraction.APIInteraction = await request.json()
+    const interaction: discord.APIInteraction = await request.json()
     if (!interaction) {
       console.error('Invalid interaction request')
     }
     console.log(interaction)
 
     switch (interaction.type) {
-      case discordInteraction.InteractionType.Ping: {
-        return JsonResponse({ type: discordInteraction.InteractionResponseType.Pong })
+      case discord.InteractionType.Ping: {
+        return JsonResponse({
+          type: discord.InteractionResponseType.Pong,
+        })
       }
-      case discordInteraction.InteractionType.ApplicationCommand: {
+      case discord.InteractionType.ApplicationCommand: {
         switch (interaction.data.name.toLocaleLowerCase()) {
-          case 'test':
-            const res = await resourceRequest(env, `/channels/${interaction.channel.id}/messages`, {
-              content: 'あいうえお',
-            })
+          case 'message':
+            const res = await resourceRequest(env, 'GET', `/channels/${interaction.channel.id}/messages`, null)
+            const json: any = await res.json()
+            if (!res.ok) {
+              return JsonResponse({
+                type: discord.InteractionResponseType.ChannelMessageWithSource,
+                data: {
+                  embeds: [
+                    {
+                      title: '__**Command Error**__',
+                      color: embedError,
+                      description: `${json.message}`,
+                    },
+                  ],
+                },
+              })
+            }
 
+            let message_list: string[] = []
+            for (let i = 0; i < json.length; i++) {
+              const message = json[i]
+              if (message.content && !message.author.bot) {
+                message_list.push(message.content)
+              }
+            }
+						console.log(message_list)
             return JsonResponse({
-              type: discordInteraction.InteractionResponseType.ChannelMessageWithSource,
+              type: discord.InteractionResponseType.ChannelMessageWithSource,
               data: {
-                content: `Test Response: ${await res.text()}`,
-              },
-            })
-          case 'invite':
-            return JsonResponse({
-              type: discordInteraction.InteractionResponseType.ChannelMessageWithSource,
-              data: {
-                content: 'This Command is not supported',
+								embeds: [
+									{
+										title: '__**Command SUCCESS**__',
+										color: embedSuccess,
+										description: `${message_list.join("\n")}`,
+									},
+								],
               },
             })
         }
@@ -61,7 +85,7 @@ export default {
   },
 }
 
-function JsonResponse(body: discordInteraction.APIInteractionResponse | null, init?: any): Response {
+function JsonResponse(body: discord.APIInteractionResponse | null, init?: any): Response {
   const jsonBody = JSON.stringify(body)
 
   return new Response(
@@ -74,13 +98,17 @@ function JsonResponse(body: discordInteraction.APIInteractionResponse | null, in
   )
 }
 
-async function resourceRequest(env: Env, point: string, body: Object) {
-  return fetch(`${entryPoint}${point}`, {
-    method: 'POST',
+async function resourceRequest(env: Env, method: string, point: string, body: Object | null) {
+  const init: RequestInit = {
+    method: method,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bot ${env.DISCORD_TOKEN}`,
     },
-    body: JSON.stringify(body),
-  })
+  }
+  if (body != null) {
+    init.body = JSON.stringify(body)
+  }
+
+  return fetch(`${entryPoint}${point}`, init)
 }
