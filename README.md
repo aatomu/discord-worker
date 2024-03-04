@@ -18,3 +18,5 @@ Discord Interaction Bot with Cloudflare workers
 - discord-interactions
 - node-fetch
 - tsx
+
+Discord Resource endpoints: https://discord.com/developers/docs/resources/application
