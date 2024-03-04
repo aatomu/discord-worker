@@ -1,9 +1,18 @@
 import fetch from 'node-fetch'
+import * as discord from 'discord-api-types/v10'
 
-export const commands = [
+export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
   {
-    name: 'message',
-    description: 'generate message, learn by channel messages',
+    name: 'poll',
+    description: 'simple poll button',
+    options: [
+      { type: discord.ApplicationCommandOptionType.String, name: 'title', description: 'Poll title', required: true },
+      { type: discord.ApplicationCommandOptionType.String, name: 'choice_1', description: 'Choice 1', required: true },
+      { type: discord.ApplicationCommandOptionType.String, name: 'choice_2', description: 'Choice 2', required: true },
+      { type: discord.ApplicationCommandOptionType.String, name: 'choice_3', description: 'Choice 3', required: false },
+      { type: discord.ApplicationCommandOptionType.String, name: 'choice_4', description: 'Choice 3', required: false },
+      { type: discord.ApplicationCommandOptionType.String, name: 'choice_5', description: 'Choice 3', required: false },
+    ],
   },
 ]
 

@@ -38,42 +38,21 @@ export default {
       }
       case discord.InteractionType.ApplicationCommand: {
         switch (interaction.data.name.toLocaleLowerCase()) {
-          case 'message':
-            const res = await resourceRequest(env, 'GET', `/channels/${interaction.channel.id}/messages`, null)
-            const json: any = await res.json()
-            if (!res.ok) {
-              return JsonResponse({
-                type: discord.InteractionResponseType.ChannelMessageWithSource,
-                data: {
-                  embeds: [
-                    {
-                      title: '__**Command Error**__',
-                      color: embedError,
-                      description: `${json.message}`,
-                    },
-                  ],
-                },
-              })
-            }
+          case 'poll':
+					if (interaction.data.options) {
+						console.log(interaction.data.options)
+					}
 
-            let message_list: string[] = []
-            for (let i = 0; i < json.length; i++) {
-              const message = json[i]
-              if (message.content && !message.author.bot) {
-                message_list.push(message.content)
-              }
-            }
-						console.log(message_list)
-            return JsonResponse({
+					return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
               data: {
-								embeds: [
-									{
-										title: '__**Command SUCCESS**__',
-										color: embedSuccess,
-										description: `${message_list.join("\n")}`,
-									},
-								],
+                embeds: [
+                  {
+                    title: '__**Command SUCCESS**__',
+                    color: embedSuccess,
+                    description: `Poll`,
+                  },
+                ],
               },
             })
         }
