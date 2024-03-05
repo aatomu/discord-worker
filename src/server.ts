@@ -1,9 +1,11 @@
 import { verifyKey } from 'discord-interactions'
 import * as discord from 'discord-api-types/v10'
+import { Ai } from '@cloudflare/ai'
 
 export interface Env {
   DISCORD_TOKEN: string
   DISCORD_PUBLIC_KEY: string
+  AI: Ai
 }
 
 const entryPoint = 'https://discord.com/api/v10'
@@ -38,7 +40,7 @@ export default {
       }
       case discord.InteractionType.ApplicationCommand: {
         switch (interaction.data.name.toLocaleLowerCase()) {
-          case 'poll':
+          case 'poll': {
             if (!('options' in interaction.data)) {
               return errorResponse('Invalid command')
             }
@@ -87,6 +89,57 @@ export default {
                 ],
               },
             })
+          }
+          case 'text2image': {
+            if (!('options' in interaction.data)) {
+              return errorResponse('Invalid command')
+            }
+            if (!interaction.data.options) {
+              return errorResponse('Not enough command options')
+            }
+
+            const option = interaction.data.options[0]
+            let prompt: string = ''
+            if ('value' in option) {
+              prompt = option.value.toString()
+            }
+
+            async function defer() {
+              const ai = new Ai(env.AI)
+              const response: Uint8Array = await ai.run<'@cf/bytedance/stable-diffusion-xl-lightning'>('@cf/bytedance/stable-diffusion-xl-lightning', {
+                prompt: prompt,
+              })
+
+              const body = new FormData()
+              body.append('files[0]', new Blob([response], { type: 'image/png' }), 'image.png')
+
+              const interactionPatch = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+                method: 'PATCH',
+                headers: {
+                  Authorization: `Bot ${env.DISCORD_TOKEN}`,
+                },
+                body: body,
+              })
+              console.log(interactionPatch.statusText, await interactionPatch.text())
+            }
+            ctx.waitUntil(defer())
+
+            return JsonResponse({
+              type: discord.InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                embeds: [
+                  {
+                    title: '__**Command Success**__',
+                    color: embedSuccess,
+                    description: `Prompt:\n \`\`\`${prompt}\`\`\``,
+                    image: {
+                      url: `attachment://image.png`,
+                    },
+                  },
+                ],
+              },
+            })
+          }
         }
       }
     }

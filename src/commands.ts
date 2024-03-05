@@ -14,6 +14,11 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
       { type: discord.ApplicationCommandOptionType.String, name: 'choice_5', description: 'Choice 3', required: false },
     ],
   },
+  {
+    name: 'text2image',
+    description: 'create image by stable diffusion!!',
+    options: [{ type: discord.ApplicationCommandOptionType.String, name: 'prompt', description: 'image create prompt', required: true, min_length: 5 }],
+  },
 ]
 
 const token = process.env.DISCORD_TOKEN
