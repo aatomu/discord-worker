@@ -15,7 +15,7 @@ const embedError = 0xff0000
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (request.method === 'GET') {
-      return new Response('', { status: 400 })
+      return new Response('', { status: 405 })
     }
 
     // Check valid request
@@ -150,7 +150,7 @@ export default {
     }
 
     console.error('Unknown Type')
-    return new Response('', { status: 400 })
+    return new Response('', { status: 418 })
   },
 }
 
