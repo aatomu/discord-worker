@@ -150,8 +150,10 @@ export default {
 }
 
 function JsonResponse(body: discord.APIInteractionResponse | null, init?: any): Response {
-  const jsonBody = JSON.stringify(body)
-
+  let jsonBody = null
+  if (!body) {
+    jsonBody = JSON.stringify(body)
+  }
   return new Response(
     jsonBody,
     init || {
