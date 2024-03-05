@@ -14,6 +14,10 @@ const embedError = 0xff0000
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    if (request.method === 'GET') {
+      return new Response('', { status: 400 })
+    }
+
     // Check valid request
     if (request.method === 'POST') {
       const signature = request.headers.get('x-signature-ed25519')
@@ -29,6 +33,7 @@ export default {
     const interaction: discord.APIInteraction = await request.json()
     if (!interaction) {
       console.error('Invalid interaction request')
+      return new Response('', { status: 400 })
     }
     console.log(interaction)
 
@@ -145,7 +150,7 @@ export default {
     }
 
     console.error('Unknown Type')
-    return JsonResponse(null, { status: 400 })
+    return new Response('', { status: 400 })
   },
 }
 
