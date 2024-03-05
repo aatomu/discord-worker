@@ -3,8 +3,8 @@ import * as discord from 'discord-api-types/v10'
 import { Ai } from '@cloudflare/ai'
 
 export interface Env {
-  DISCORD_TOKEN: string
-  DISCORD_PUBLIC_KEY: string
+  TOKEN: string
+  PUBLIC_KEY: string
   AI: Ai
 }
 
@@ -23,7 +23,7 @@ export default {
       const signature = request.headers.get('x-signature-ed25519')
       const timestamp = request.headers.get('x-signature-timestamp')
       const body = await request.clone().arrayBuffer()
-      const isValidRequest = signature && timestamp && verifyKey(body, signature, timestamp, env.DISCORD_PUBLIC_KEY)
+      const isValidRequest = signature && timestamp && verifyKey(body, signature, timestamp, env.PUBLIC_KEY)
       if (!isValidRequest) {
         console.error('Invalid Request')
         return new Response('Bad request signature.', { status: 401 })
@@ -121,7 +121,7 @@ export default {
               const interactionPatch = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
                 method: 'PATCH',
                 headers: {
-                  Authorization: `Bot ${env.DISCORD_TOKEN}`,
+                  Authorization: `Bot ${env.TOKEN}`,
                 },
                 body: body,
               })
@@ -189,7 +189,7 @@ async function resourceRequest(env: Env, method: string, point: string, body: Ob
     method: method,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bot ${env.DISCORD_TOKEN}`,
+      Authorization: `Bot ${env.TOKEN}`,
     },
   }
   if (body != null) {
