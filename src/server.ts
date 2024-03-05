@@ -11,7 +11,7 @@ const embedSuccess = 0x00ffff
 const embedError = 0xff0000
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     // Check valid request
     if (request.method === 'POST') {
       const signature = request.headers.get('x-signature-ed25519')
@@ -39,18 +39,50 @@ export default {
       case discord.InteractionType.ApplicationCommand: {
         switch (interaction.data.name.toLocaleLowerCase()) {
           case 'poll':
-					if (interaction.data.options) {
-						console.log(interaction.data.options)
-					}
+            if (!('options' in interaction.data)) {
+              return errorResponse('Invalid command')
+            }
+            if (!interaction.data.options) {
+              return errorResponse('Not enough command options')
+            }
 
-					return JsonResponse({
+            const reaction: string[] = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
+            let title: string = ''
+            let choices: string[] = []
+            interaction.data.options.forEach((options, index) => {
+              if ('value' in options) {
+                if (options.name === 'title') {
+                  title = `# ${options.value}`
+                  return
+                }
+                choices.push(reaction[index - 1] + ': ' + options.value.toString())
+              }
+            })
+
+            async function defer(): Promise<void> {
+              const interactionOriginal = await resourceRequest(env, 'GET', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, null)
+              if (!interactionOriginal.ok) {
+                return
+              }
+              const interactionResponse: discord.APIMessage = (await interactionOriginal.json()) as discord.APIMessage
+              if (!interactionResponse) {
+                return
+              }
+              for (let i = 0; i < choices.length; i++) {
+                await resourceRequest(env, 'PUT', `/channels/${interactionResponse.channel_id}/messages/${interactionResponse.id}/reactions/${encodeURIComponent(reaction[i])}/@me`, null)
+                await sleep(1000)
+              }
+            }
+            ctx.waitUntil(defer())
+
+            return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
               data: {
                 embeds: [
                   {
-                    title: '__**Command SUCCESS**__',
+                    title: '__**Command Success**__',
                     color: embedSuccess,
-                    description: `Poll`,
+                    description: `${title}\n\n${choices.join('\n')}`,
                   },
                 ],
               },
@@ -77,6 +109,21 @@ function JsonResponse(body: discord.APIInteractionResponse | null, init?: any): 
   )
 }
 
+function errorResponse(message: string): Response {
+  return JsonResponse({
+    type: discord.InteractionResponseType.ChannelMessageWithSource,
+    data: {
+      embeds: [
+        {
+          title: '__**Command Error**__',
+          color: embedError,
+          description: message,
+        },
+      ],
+    },
+  })
+}
+
 async function resourceRequest(env: Env, method: string, point: string, body: Object | null) {
   const init: RequestInit = {
     method: method,
@@ -90,4 +137,8 @@ async function resourceRequest(env: Env, method: string, point: string, body: Ob
   }
 
   return fetch(`${entryPoint}${point}`, init)
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
