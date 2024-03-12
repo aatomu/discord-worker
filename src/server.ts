@@ -15,7 +15,7 @@ const embedError = 0xff0000
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (request.method === 'GET') {
-      return new Response('', { status: 405 })
+			return new Response(`👋 Intenraction End point`)
     }
 
     // Check valid request
@@ -26,14 +26,14 @@ export default {
       const isValidRequest = signature && timestamp && verifyKey(body, signature, timestamp, env.PUBLIC_KEY)
       if (!isValidRequest) {
         console.error('Invalid Request')
-        return new Response('Bad request signature.', { status: 401 })
+        return JsonResponse({ error: 'Bad request signature.' }, { status: 401 })
       }
     }
 
     const interaction: discord.APIInteraction = await request.json()
     if (!interaction) {
       console.error('Invalid interaction request')
-      return new Response('', { status: 400 })
+      return JsonResponse({ error: 'Bad request body' }, { status: 401 })
     }
     console.log(interaction)
 
@@ -150,11 +150,11 @@ export default {
     }
 
     console.error('Unknown Type')
-    return new Response('', { status: 418 })
+    return JsonResponse({ error: 'Unknown Type' }, { status: 400 })
   },
 }
 
-function JsonResponse(body: discord.APIInteractionResponse | null, init?: any): Response {
+function JsonResponse(body: discord.APIInteractionResponse | Object, init?: any): Response {
   console.log(body)
   let jsonBody = null
   if (!body) {
