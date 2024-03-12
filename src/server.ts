@@ -15,7 +15,7 @@ const embedError = 0xff0000
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (request.method === 'GET') {
-			return new Response(`👋 Intenraction End point`)
+      return new Response(`👋 Intenraction End point`)
     }
 
     // Check valid request
@@ -95,7 +95,7 @@ export default {
               },
             })
           }
-          case 'text2image': {
+					case 'text2image': {
             if (!('options' in interaction.data)) {
               return errorResponse('Invalid command')
             }
@@ -155,9 +155,9 @@ export default {
 }
 
 function JsonResponse(body: discord.APIInteractionResponse | Object, init?: any): Response {
-  console.log(body)
+  console.log("Response",body)
   let jsonBody = null
-  if (!body) {
+  if (body) {
     jsonBody = JSON.stringify(body)
   }
   return new Response(
