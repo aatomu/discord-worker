@@ -3,6 +3,7 @@ import * as discord from 'discord-api-types/v10'
 
 export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
   {
+		type:discord.ApplicationCommandType.ChatInput,
     name: 'poll',
     description: 'simple poll button',
     options: [
@@ -15,15 +16,20 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
     ],
   },
   {
+		type:discord.ApplicationCommandType.ChatInput,
     name: 'text2image',
     description: 'create image by stable diffusion!!',
     options: [{ type: discord.ApplicationCommandOptionType.String, name: 'prompt', description: 'image create prompt', required: true, min_length: 5 }],
   },
+  {
+		type:discord.ApplicationCommandType.Message,
+    name: 'book mark'
+  },
 ]
 
-const token = process.env.DISCORD_TOKEN
+const token = process.env.TOKEN
 if (!token) {
-  throw new Error('invalid value: DISCORD_TOKEN')
+  throw new Error('invalid value: TOKEN')
 }
 const applicationId = process.env.APPLICATION_ID
 if (!applicationId) {
