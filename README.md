@@ -6,9 +6,9 @@ Discord Interaction Bot with Cloudflare workers
 
 1. `git clone https://github.com/aatomu/discord-worker.git`: clone repository
 2. `npm install`: install using library
-3. `wrangler secret put DISCORD_PUBLIC_KEY`: Input your `Bot PublicKey`
-4. `wrangler secret put DISCORD_TOKEN`: Input your `Bot Token`
-5. `export DISCORD_TOKEN=**** APPLICATION_ID=***`: Input your `Bot Token`,`Application ID`
+3. `wrangler secret put PUBLIC_KEY`: Input your `Bot PublicKey`
+4. `wrangler secret put TOKEN`: Input your `Bot Token`
+5. `export TOKEN=**** APPLICATION_ID=***`: Input your `Bot Token`,`Application ID`
 5. `npm run register`: registration discord commands
 6. `npm run deploy`: registration cloudflare workers
 
