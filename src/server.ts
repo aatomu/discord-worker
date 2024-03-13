@@ -14,20 +14,18 @@ const embedError = 0xff0000
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    if (request.method === 'GET') {
-      return new Response(`👋 Intenraction End point`)
+    if (request.method !== 'POST') {
+      return JsonResponse({ error: 'Invalid method.' }, { status: 405 })
     }
 
     // Check valid request
-    if (request.method === 'POST') {
-      const signature = request.headers.get('x-signature-ed25519')
-      const timestamp = request.headers.get('x-signature-timestamp')
-      const body = await request.clone().arrayBuffer()
-      const isValidRequest = signature && timestamp && verifyKey(body, signature, timestamp, env.PUBLIC_KEY)
-      if (!isValidRequest) {
-        console.error('Invalid Request')
-        return JsonResponse({ error: 'Bad request signature.' }, { status: 401 })
-      }
+    const signature = request.headers.get('x-signature-ed25519')
+    const timestamp = request.headers.get('x-signature-timestamp')
+    const body = await request.clone().arrayBuffer()
+    const isValidRequest = signature && timestamp && verifyKey(body, signature, timestamp, env.PUBLIC_KEY)
+    if (!isValidRequest) {
+      console.error('Invalid Request')
+      return JsonResponse({ error: 'Bad request signature.' }, { status: 401 })
     }
 
     const interaction: discord.APIInteraction = await request.json()
@@ -95,7 +93,7 @@ export default {
               },
             })
           }
-					case 'text2image': {
+          case 'text2image': {
             if (!('options' in interaction.data)) {
               return errorResponse('Invalid command')
             }
@@ -145,6 +143,19 @@ export default {
               },
             })
           }
+          case 'book mark': {
+            if (interaction.data.type !== discord.ApplicationCommandType.Message) {
+              return errorResponse('Unknown command')
+            }
+
+						const t = interaction.data.resolved.messages[interaction.data.target_id]
+            return JsonResponse({
+              type: discord.InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                content: `Book mark:https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}`,
+              },
+            })
+          }
         }
       }
     }
@@ -155,7 +166,7 @@ export default {
 }
 
 function JsonResponse(body: discord.APIInteractionResponse | Object, init?: any): Response {
-  console.log("Response",body)
+  console.log('Response', body)
   let jsonBody = null
   if (body) {
     jsonBody = JSON.stringify(body)
