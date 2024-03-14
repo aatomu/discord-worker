@@ -109,14 +109,17 @@ export default {
 
             async function defer() {
               const ai = new Ai(env.AI)
-              const response: Uint8Array = await ai.run<'@cf/bytedance/stable-diffusion-xl-lightning'>('@cf/bytedance/stable-diffusion-xl-lightning', {
-                prompt: prompt,
-              })
-
               const body = new FormData()
-              body.append('files[0]', new Blob([response], { type: 'image/png' }), 'image.png')
 
-              const interactionPatch = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+              for (let i = 0; i < 4; i++) {
+                const response: Uint8Array = await ai.run<'@cf/bytedance/stable-diffusion-xl-lightning'>('@cf/bytedance/stable-diffusion-xl-lightning', {
+                  prompt: prompt,
+                })
+
+                body.append(`files[${i}]`, new Blob([response], { type: 'image/png' }), 'image.png')
+              }
+
+							const interactionPatch = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
                 method: 'PATCH',
                 headers: {
                   Authorization: `Bot ${env.TOKEN}`,
@@ -127,20 +130,19 @@ export default {
             }
             ctx.waitUntil(defer())
 
+            const data: discord.APIInteractionResponseCallbackData = {
+              embeds: [
+                {
+                  title: '__**Command Success**__',
+                  color: embedSuccess,
+                  description: `Prompt:\n \`\`\`${prompt}\`\`\``,
+                },
+              ],
+            }
+
             return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
-              data: {
-                embeds: [
-                  {
-                    title: '__**Command Success**__',
-                    color: embedSuccess,
-                    description: `Prompt:\n \`\`\`${prompt}\`\`\``,
-                    image: {
-                      url: `attachment://image.png`,
-                    },
-                  },
-                ],
-              },
+              data: data,
             })
           }
           case 'book mark': {
@@ -148,7 +150,7 @@ export default {
               return errorResponse('Unknown command')
             }
 
-						const t = interaction.data.resolved.messages[interaction.data.target_id]
+            const t = interaction.data.resolved.messages[interaction.data.target_id]
             return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
               data: {
