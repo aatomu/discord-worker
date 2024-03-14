@@ -6,6 +6,7 @@ export interface Env {
   TOKEN: string
   PUBLIC_KEY: string
   AI: Ai
+  DEEPL: string
 }
 
 const entryPoint = 'https://discord.com/api/v10'
@@ -119,7 +120,7 @@ export default {
                 body.append(`files[${i}]`, new Blob([response], { type: 'image/png' }), 'image.png')
               }
 
-							const interactionPatch = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+              const interactionPatch = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
                 method: 'PATCH',
                 headers: {
                   Authorization: `Bot ${env.TOKEN}`,
@@ -145,7 +146,34 @@ export default {
               data: data,
             })
           }
-          case 'book mark': {
+          case 'translate to en': {
+            if (interaction.data.type !== discord.ApplicationCommandType.Message) {
+              return errorResponse('Unknown command')
+            }
+
+            const t = interaction.data.resolved.messages[interaction.data.target_id]
+            if (!t.content) {
+              return errorResponse('Unknown message')
+            }
+
+						console.log(`https://api-free.deepl.com/v2/translate?${encodeURI(`auth_key=${env.DEEPL}&text=${t.content}&target_lang=EN`)}`)
+            const res = await fetch(`https://api-free.deepl.com/v2/translate?${encodeURI(`auth_key=${env.DEEPL}&text=${t.content}&target_lang=EN`)}`)
+						console.log(res.ok,res.status)
+            if (!res.ok) {
+              return errorResponse('failed translate')
+            }
+
+            const result: any = await res.json()
+            const translation = result.translations[0]
+
+            return JsonResponse({
+              type: discord.InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                content: `https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}\nFrom:${translation.detected_source_language}\n${translation.text}`,
+              },
+            })
+          }
+          case 'translate to jp': {
             if (interaction.data.type !== discord.ApplicationCommandType.Message) {
               return errorResponse('Unknown command')
             }

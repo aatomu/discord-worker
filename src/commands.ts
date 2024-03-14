@@ -23,7 +23,11 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
   },
   {
 		type:discord.ApplicationCommandType.Message,
-    name: 'book mark'
+    name: 'translate to EN'
+  },
+  {
+		type:discord.ApplicationCommandType.Message,
+    name: 'translate to JP'
   },
 ]
 
