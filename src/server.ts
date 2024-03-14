@@ -184,7 +184,7 @@ export default {
             const translate = await ai
               .run('@cf/meta/m2m100-1.2b', {
                 text: t.content,
-                target_lang: 'jp',
+                target_lang: 'ja',
               })
 
             return JsonResponse({
