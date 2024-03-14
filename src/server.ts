@@ -156,20 +156,17 @@ export default {
               return errorResponse('Unknown message')
             }
 
-						console.log(`https://api-free.deepl.com/v2/translate?${encodeURI(`auth_key=${env.DEEPL}&text=${t.content}&target_lang=EN`)}`)
-            const res = await fetch(`https://api-free.deepl.com/v2/translate?${encodeURI(`auth_key=${env.DEEPL}&text=${t.content}&target_lang=EN`)}`)
-						console.log(res.ok,res.status)
-            if (!res.ok) {
-              return errorResponse('failed translate')
-            }
-
-            const result: any = await res.json()
-            const translation = result.translations[0]
+            const ai = new Ai(env.AI)
+            const translate = await ai
+              .run('@cf/meta/m2m100-1.2b', {
+                text: t.content,
+                target_lang: 'en',
+              })
 
             return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
               data: {
-                content: `https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}\nFrom:${translation.detected_source_language}\n${translation.text}`,
+                content: `https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}\n${translate.translated_text}`,
               },
             })
           }
@@ -179,10 +176,21 @@ export default {
             }
 
             const t = interaction.data.resolved.messages[interaction.data.target_id]
+            if (!t.content) {
+              return errorResponse('Unknown message')
+            }
+
+            const ai = new Ai(env.AI)
+            const translate = await ai
+              .run('@cf/meta/m2m100-1.2b', {
+                text: t.content,
+                target_lang: 'jp',
+              })
+
             return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
               data: {
-                content: `Book mark:https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}`,
+                content: `https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}\n${translate.translated_text}`,
               },
             })
           }
