@@ -6,7 +6,6 @@ export interface Env {
   TOKEN: string
   PUBLIC_KEY: string
   AI: Ai
-  DEEPL: string
 }
 
 const entryPoint = 'https://discord.com/api/v10'
@@ -36,18 +35,18 @@ export default {
     }
     console.log(interaction)
 
-    switch (interaction.type) {
-      case discord.InteractionType.Ping: {
-        return JsonResponse({
-          type: discord.InteractionResponseType.Pong,
-        })
-      }
-      case discord.InteractionType.ApplicationCommand: {
+    // Discord interaction endpoint activate
+    if (interaction.type === discord.InteractionType.Ping) {
+      return JsonResponse({
+        type: discord.InteractionResponseType.Pong,
+      })
+    }
+    // Interaction(slash,user,message) request
+    if (interaction.type === discord.InteractionType.ApplicationCommand) {
+      // Slash
+      if (interaction.data.type === discord.ApplicationCommandType.ChatInput) {
         switch (interaction.data.name.toLocaleLowerCase()) {
           case 'poll': {
-            if (!('options' in interaction.data)) {
-              return errorResponse('Invalid command')
-            }
             if (!interaction.data.options) {
               return errorResponse('Not enough command options')
             }
@@ -95,9 +94,6 @@ export default {
             })
           }
           case 'text2image': {
-            if (!('options' in interaction.data)) {
-              return errorResponse('Invalid command')
-            }
             if (!interaction.data.options) {
               return errorResponse('Not enough command options')
             }
@@ -146,22 +142,88 @@ export default {
               data: data,
             })
           }
+          case 'embed': {
+            return JsonResponse({
+              type: discord.InteractionResponseType.Modal,
+              data: {
+                title: 'Embed Configuration',
+                custom_id: 'embed_config',
+                components: [
+                  {
+                    type: discord.ComponentType.ActionRow,
+                    components: [
+                      {
+                        type: discord.ComponentType.TextInput,
+                        custom_id: 'title',
+                        label: 'Title',
+                        style: discord.TextInputStyle.Short,
+                        min_length: 1,
+                        required: true,
+                      },
+                    ],
+                  },
+                  {
+                    type: discord.ComponentType.ActionRow,
+                    components: [
+                      {
+                        type: discord.ComponentType.TextInput,
+                        custom_id: 'description',
+                        label: 'Description',
+                        style: discord.TextInputStyle.Short,
+                        min_length: 1,
+                        required: false,
+                      },
+                    ],
+                  },
+                  {
+                    type: discord.ComponentType.ActionRow,
+                    components: [
+                      {
+                        type: discord.ComponentType.TextInput,
+                        custom_id: 'thumbnail',
+                        label: 'Thumbnail URL',
+                        style: discord.TextInputStyle.Short,
+                        placeholder: 'https://...',
+                        min_length: 8,
+                        required: false,
+                      },
+                    ],
+                  },
+                  {
+                    type: discord.ComponentType.ActionRow,
+                    components: [
+                      {
+                        type: discord.ComponentType.TextInput,
+                        custom_id: 'color',
+                        label: 'Embed Color',
+                        style: discord.TextInputStyle.Short,
+                        placeholder: 'ffffff',
+                        min_length: 6,
+                        max_length: 6,
+                        required: false,
+                      },
+                    ],
+                  },
+                ],
+              },
+            })
+          }
+        }
+      }
+      // Message
+      if (interaction.data.type === discord.ApplicationCommandType.Message) {
+        switch (interaction.data.name.toLocaleLowerCase()) {
           case 'translate to en': {
-            if (interaction.data.type !== discord.ApplicationCommandType.Message) {
-              return errorResponse('Unknown command')
-            }
-
             const t = interaction.data.resolved.messages[interaction.data.target_id]
             if (!t.content) {
               return errorResponse('Unknown message')
             }
 
             const ai = new Ai(env.AI)
-            const translate = await ai
-              .run('@cf/meta/m2m100-1.2b', {
-                text: t.content,
-                target_lang: 'en',
-              })
+            const translate = await ai.run('@cf/meta/m2m100-1.2b', {
+              text: t.content,
+              target_lang: 'en',
+            })
 
             return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
@@ -171,21 +233,16 @@ export default {
             })
           }
           case 'translate to jp': {
-            if (interaction.data.type !== discord.ApplicationCommandType.Message) {
-              return errorResponse('Unknown command')
-            }
-
             const t = interaction.data.resolved.messages[interaction.data.target_id]
             if (!t.content) {
               return errorResponse('Unknown message')
             }
 
             const ai = new Ai(env.AI)
-            const translate = await ai
-              .run('@cf/meta/m2m100-1.2b', {
-                text: t.content,
-                target_lang: 'ja',
-              })
+            const translate = await ai.run('@cf/meta/m2m100-1.2b', {
+              text: t.content,
+              target_lang: 'ja',
+            })
 
             return JsonResponse({
               type: discord.InteractionResponseType.ChannelMessageWithSource,
@@ -194,12 +251,89 @@ export default {
               },
             })
           }
+          case 'delete embed': {
+            let user: discord.APIUser
+            if (interaction.member) {
+              user = interaction.member.user
+            } else if (interaction.user) {
+              user = interaction.user
+            } else {
+              user = {
+                id: '00000000',
+                discriminator: '0',
+                username: 'unknown',
+                global_name: 'unknown',
+                avatar: '',
+              }
+            }
+
+            const t = interaction.data.resolved.messages[interaction.data.target_id]
+            if (t.embeds[0].author?.name !== user.username) {
+              return errorResponse('This message is not your sent')
+            }
+
+            const res = await resourceRequest(env, 'DELETE', `/channels/${t.channel_id}/messages/${t.id}`, null)
+
+            return JsonResponse({
+              type: discord.InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                content: `isSuccess: ${res.ok}`,
+                flags: discord.MessageFlags.Ephemeral,
+              },
+            })
+          }
+        }
+      }
+    }
+    // Posted modal
+    if (interaction.type === discord.InteractionType.ModalSubmit) {
+      switch (interaction.data.custom_id) {
+        case 'embed_config': {
+          let config: { [k: string]: string } = {}
+          interaction.data.components.forEach((row) => {
+            const data = row.components[0]
+            config[data.custom_id] = data.value
+          })
+
+          let user: discord.APIUser
+          if (interaction.member) {
+            user = interaction.member.user
+          } else if (interaction.user) {
+            user = interaction.user
+          } else {
+            user = {
+              id: '00000000',
+              discriminator: '0',
+              username: 'unknown',
+              global_name: 'unknown',
+              avatar: '',
+            }
+          }
+          return JsonResponse({
+            type: discord.InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              embeds: [
+                {
+                  title: config['title'],
+                  description: config['description'],
+                  thumbnail: {
+                    url: config['thumbnail'],
+                  },
+                  color: hex2num(config['color']),
+                  author: {
+                    name: user.username,
+                    icon_url: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
+                  },
+                },
+              ],
+            },
+          })
         }
       }
     }
 
-    console.error('Unknown Type')
-    return JsonResponse({ error: 'Unknown Type' }, { status: 400 })
+    console.error('Unknown type/command')
+    return JsonResponse({ error: 'Unknown type/command' }, { status: 400 })
   },
 }
 
@@ -230,6 +364,7 @@ function errorResponse(message: string): Response {
           description: message,
         },
       ],
+      flags: discord.MessageFlags.Ephemeral,
     },
   })
 }
@@ -251,4 +386,12 @@ async function resourceRequest(env: Env, method: string, point: string, body: Ob
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function hex2num(hex: string): number {
+  let num = Number(`0x${hex}`)
+  if (isNaN(num)) {
+    num = 0
+  }
+  return num
 }

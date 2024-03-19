@@ -23,12 +23,21 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
   },
   {
 		type:discord.ApplicationCommandType.Message,
-    name: 'translate to EN'
+    name: 'translate to en'
   },
   {
 		type:discord.ApplicationCommandType.Message,
-    name: 'translate to JP'
+    name: 'translate to jp'
   },
+	{
+		type:discord.ApplicationCommandType.ChatInput,
+		name:"embed",
+		description:"create new Embed!"
+	},
+  {
+		type:discord.ApplicationCommandType.Message,
+    name: 'delete embed'
+  }
 ]
 
 const token = process.env.TOKEN
