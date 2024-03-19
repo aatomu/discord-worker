@@ -170,7 +170,7 @@ export default {
                         type: discord.ComponentType.TextInput,
                         custom_id: 'description',
                         label: 'Description',
-                        style: discord.TextInputStyle.Short,
+                        style: discord.TextInputStyle.Paragraph,
                         min_length: 1,
 												max_length:2000,
                         required: false,
