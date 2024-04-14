@@ -17,11 +17,11 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     switch (request.method) {
       case 'GET': {
-        return new Response(activity.page,{
-					headers:{
-						'Content-Type': 'text/html;charset=UTF-8',
-					}
-				})
+        return new Response(activity.page, {
+          headers: {
+            'Content-Type': 'text/html;charset=UTF-8',
+          },
+        })
       }
       case 'POST': {
         // Check valid request
