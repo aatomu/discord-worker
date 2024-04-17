@@ -216,6 +216,45 @@ export default {
                   },
                 })
               }
+              case 'comp': {
+                return JsonResponse({
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    content: 'aaaa',
+                    components: [
+                      {
+                        type: discord.ComponentType.ActionRow,
+                        components: [
+                          {
+                            type: discord.ComponentType.Button,
+                            custom_id: 'a',
+                            label: 'aiueo',
+                            style: discord.ButtonStyle.Danger,
+                          },
+                          {
+                            type: discord.ComponentType.Button,
+                            custom_id: 'b',
+                            label: 'aiueo',
+                            style: discord.ButtonStyle.Primary,
+                          },
+                          {
+                            type: discord.ComponentType.Button,
+                            custom_id: 'c',
+                            label: 'aiueo',
+                            style: discord.ButtonStyle.Secondary,
+                          },
+                          {
+                            type: discord.ComponentType.Button,
+                            custom_id: 'd',
+                            label: 'aiueo',
+                            style: discord.ButtonStyle.Success,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                })
+              }
             }
           }
           // Message

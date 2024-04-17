@@ -3,7 +3,7 @@ import * as discord from 'discord-api-types/v10'
 
 export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
   {
-		type:discord.ApplicationCommandType.ChatInput,
+    type: discord.ApplicationCommandType.ChatInput,
     name: 'poll',
     description: 'simple poll button',
     options: [
@@ -16,28 +16,33 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
     ],
   },
   {
-		type:discord.ApplicationCommandType.ChatInput,
+    type: discord.ApplicationCommandType.ChatInput,
     name: 'text2image',
     description: 'create image by stable diffusion!!',
     options: [{ type: discord.ApplicationCommandOptionType.String, name: 'prompt', description: 'image create prompt', required: true, min_length: 5 }],
   },
   {
-		type:discord.ApplicationCommandType.Message,
-    name: 'translate to en'
+    type: discord.ApplicationCommandType.Message,
+    name: 'translate to en',
   },
   {
-		type:discord.ApplicationCommandType.Message,
-    name: 'translate to jp'
+    type: discord.ApplicationCommandType.Message,
+    name: 'translate to jp',
   },
-	{
-		type:discord.ApplicationCommandType.ChatInput,
-		name:"embed",
-		description:"create new Embed!"
-	},
   {
-		type:discord.ApplicationCommandType.Message,
-    name: 'delete embed'
-  }
+    type: discord.ApplicationCommandType.ChatInput,
+    name: 'embed',
+    description: 'create new Embed!',
+  },
+  {
+    type: discord.ApplicationCommandType.Message,
+    name: 'delete embed',
+  },
+  {
+    type: discord.ApplicationCommandType.ChatInput,
+    name: 'comp',
+    description: 'components',
+  },
 ]
 
 const token = process.env.TOKEN
