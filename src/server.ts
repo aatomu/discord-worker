@@ -15,13 +15,6 @@ const embedError = 0xff0000
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     switch (request.method) {
-      case 'GET': {
-        return new Response("Unknown method", {
-          headers: {
-            'Content-Type': 'text/html;charset=UTF-8',
-          },
-        })
-      }
       case 'POST': {
         // Check valid request
         const signature = request.headers.get('x-signature-ed25519')
@@ -51,53 +44,6 @@ export default {
           // Slash
           if (interaction.data.type === discord.ApplicationCommandType.ChatInput) {
             switch (interaction.data.name.toLocaleLowerCase()) {
-              case 'poll': {
-                if (!interaction.data.options) {
-                  return errorResponse('Not enough command options')
-                }
-
-                const reaction: string[] = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
-                let title: string = ''
-                let choices: string[] = []
-                interaction.data.options.forEach((options, index) => {
-                  if ('value' in options) {
-                    if (options.name === 'title') {
-                      title = `# ${options.value}`
-                      return
-                    }
-                    choices.push(reaction[index - 1] + ': ' + options.value.toString())
-                  }
-                })
-
-                async function defer(): Promise<void> {
-                  const interactionOriginal = await resourceRequest(env, 'GET', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, null)
-                  if (!interactionOriginal.ok) {
-                    return
-                  }
-                  const interactionResponse: discord.APIMessage = (await interactionOriginal.json()) as discord.APIMessage
-                  if (!interactionResponse) {
-                    return
-                  }
-                  for (let i = 0; i < choices.length; i++) {
-                    await resourceRequest(env, 'PUT', `/channels/${interactionResponse.channel_id}/messages/${interactionResponse.id}/reactions/${encodeURIComponent(reaction[i])}/@me`, null)
-                    await sleep(1000)
-                  }
-                }
-                ctx.waitUntil(defer())
-
-                return JsonResponse({
-                  type: discord.InteractionResponseType.ChannelMessageWithSource,
-                  data: {
-                    embeds: [
-                      {
-                        title: '__**Command Success**__',
-                        color: embedSuccess,
-                        description: `${title}\n\n${choices.join('\n')}`,
-                      },
-                    ],
-                  },
-                })
-              }
               case 'text2image': {
                 if (!interaction.data.options) {
                   return errorResponse('Not enough command options')
@@ -274,7 +220,7 @@ export default {
                 return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
-                    content: `https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}\n${translate.translated_text}`,
+                    content: `https://discord.com/channels/${interaction.guild_id}/${interaction.channel.id}/${interaction.id}\n${translate.translated_text}`,
                   },
                 })
               }
@@ -293,7 +239,7 @@ export default {
                 return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
-                    content: `https://discord.com/channels/${interaction.data.guild_id}/${t.channel_id}/${t.id}\n${translate.translated_text}`,
+                    content: `https://discord.com/channels/${interaction.guild_id}/${interaction.channel.id}/${interaction.id}\n${translate.translated_text}`,
                   },
                 })
               }
@@ -318,7 +264,7 @@ export default {
                   return errorResponse('This message is not your sent')
                 }
 
-                const res = await resourceRequest(env, 'DELETE', `/channels/${t.channel_id}/messages/${t.id}`, null)
+                const res = await resourceRequest(env, 'DELETE', `/channels/${interaction.channel.id}/messages/${t.id}`, null)
 
                 return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
