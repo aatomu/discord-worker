@@ -21,6 +21,3 @@ Discord Interaction Bot with Cloudflare workers
 
 * Discord Resource endpoints:
   https://discord.com/developers/docs/resources/application
-* Discord Activity(Embedded App SDK):
-  https://discord.com/developers/docs/activities/building-an-activity
-  https://github.com/discord/embedded-app-sdk/tree/main/examples/discord-activity-starter
