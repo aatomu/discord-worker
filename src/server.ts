@@ -1,7 +1,6 @@
 import { verifyKey } from 'discord-interactions'
 import * as discord from 'discord-api-types/v10'
 import { Ai } from '@cloudflare/ai'
-import * as activity from './activity'
 
 export interface Env {
   TOKEN: string
@@ -17,7 +16,7 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     switch (request.method) {
       case 'GET': {
-        return new Response(activity.page, {
+        return new Response("Unknown method", {
           headers: {
             'Content-Type': 'text/html;charset=UTF-8',
           },
