@@ -202,6 +202,79 @@ export default {
               }
             }
           }
+					// User
+					if (interaction.data.type === discord.ApplicationCommandType.User) {
+						switch (interaction.data.name.toLocaleLowerCase()) {
+              case 'embed': {
+                return JsonResponse({
+                  type: discord.InteractionResponseType.Modal,
+                  data: {
+                    title: 'Embed Configuration',
+                    custom_id: 'embed_config',
+                    components: [
+                      {
+                        type: discord.ComponentType.ActionRow,
+                        components: [
+                          {
+                            type: discord.ComponentType.TextInput,
+                            custom_id: 'title',
+                            label: 'Title',
+                            style: discord.TextInputStyle.Short,
+                            min_length: 1,
+                            max_length: 200,
+                            required: true,
+                          },
+                        ],
+                      },
+                      {
+                        type: discord.ComponentType.ActionRow,
+                        components: [
+                          {
+                            type: discord.ComponentType.TextInput,
+                            custom_id: 'description',
+                            label: 'Description',
+                            style: discord.TextInputStyle.Paragraph,
+                            min_length: 1,
+                            max_length: 2000,
+                            required: false,
+                          },
+                        ],
+                      },
+                      {
+                        type: discord.ComponentType.ActionRow,
+                        components: [
+                          {
+                            type: discord.ComponentType.TextInput,
+                            custom_id: 'thumbnail',
+                            label: 'Thumbnail URL',
+                            style: discord.TextInputStyle.Short,
+                            placeholder: 'https://...',
+                            min_length: 8,
+                            required: false,
+                          },
+                        ],
+                      },
+                      {
+                        type: discord.ComponentType.ActionRow,
+                        components: [
+                          {
+                            type: discord.ComponentType.TextInput,
+                            custom_id: 'color',
+                            label: 'Embed Color',
+                            style: discord.TextInputStyle.Short,
+                            placeholder: 'ffffff',
+                            min_length: 6,
+                            max_length: 6,
+                            required: false,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                })
+              }
+						}
+					}
           // Message
           if (interaction.data.type === discord.ApplicationCommandType.Message) {
             switch (interaction.data.name.toLocaleLowerCase()) {
