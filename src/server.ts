@@ -9,7 +9,7 @@ export interface Env {
 }
 
 const entryPoint = 'https://discord.com/api/v10'
-const embedSuccess = 0x00ffff
+const embedSuccess = 0xF58025
 const embedError = 0xff0000
 
 export default {
