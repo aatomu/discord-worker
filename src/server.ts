@@ -202,79 +202,38 @@ export default {
               }
             }
           }
-					// User
-					if (interaction.data.type === discord.ApplicationCommandType.User) {
-						switch (interaction.data.name.toLocaleLowerCase()) {
-              case 'embed': {
+          // User
+          if (interaction.data.type === discord.ApplicationCommandType.User) {
+            switch (interaction.data.name.toLocaleLowerCase()) {
+              case 'status': {
+                console.log(interaction.data)
+								const user = interaction.data.resolved.users[interaction.data.target_id]
+								const guildUser = interaction.member
+                console.log(user)
+                console.log(guildUser)
+                const DiscordEpoch = 1420070400000
+                const createdAt = new Date(Number(BigInt(user.id) >> 22n) + DiscordEpoch)
+                const joinedAt = new Date(guildUser=== undefined ? 0 : guildUser.joined_at)
+                const nitroType = ['None', 'Nitro Classic', 'Nitro', 'Nitro Basic']
                 return JsonResponse({
-                  type: discord.InteractionResponseType.Modal,
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
-                    title: 'Embed Configuration',
-                    custom_id: 'embed_config',
-                    components: [
+                    embeds: [
                       {
-                        type: discord.ComponentType.ActionRow,
-                        components: [
-                          {
-                            type: discord.ComponentType.TextInput,
-                            custom_id: 'title',
-                            label: 'Title',
-                            style: discord.TextInputStyle.Short,
-                            min_length: 1,
-                            max_length: 200,
-                            required: true,
-                          },
-                        ],
-                      },
-                      {
-                        type: discord.ComponentType.ActionRow,
-                        components: [
-                          {
-                            type: discord.ComponentType.TextInput,
-                            custom_id: 'description',
-                            label: 'Description',
-                            style: discord.TextInputStyle.Paragraph,
-                            min_length: 1,
-                            max_length: 2000,
-                            required: false,
-                          },
-                        ],
-                      },
-                      {
-                        type: discord.ComponentType.ActionRow,
-                        components: [
-                          {
-                            type: discord.ComponentType.TextInput,
-                            custom_id: 'thumbnail',
-                            label: 'Thumbnail URL',
-                            style: discord.TextInputStyle.Short,
-                            placeholder: 'https://...',
-                            min_length: 8,
-                            required: false,
-                          },
-                        ],
-                      },
-                      {
-                        type: discord.ComponentType.ActionRow,
-                        components: [
-                          {
-                            type: discord.ComponentType.TextInput,
-                            custom_id: 'color',
-                            label: 'Embed Color',
-                            style: discord.TextInputStyle.Short,
-                            placeholder: 'ffffff',
-                            min_length: 6,
-                            max_length: 6,
-                            required: false,
-                          },
-                        ],
+                        title: `${user.username}'s Status`,
+                        description:
+                          `\`Global  :\` "${user.global_name === undefined ? '' : user.global_name}"\n` +
+                          `\`Server  :\` "${user.username === undefined ? '' : user.username}"\n` +
+                          `\`Bot     :\` ${user.bot === true ? true : false}\n` +
+                          `\`Created :\` <t:${Math.floor(createdAt.getTime() / 1000)}>\n` +
+                          `\`Joined  :\` <t:${Math.floor(joinedAt.getTime() / 1000)}>\n`,
                       },
                     ],
                   },
                 })
               }
-						}
-					}
+            }
+          }
           // Message
           if (interaction.data.type === discord.ApplicationCommandType.Message) {
             switch (interaction.data.name.toLocaleLowerCase()) {
@@ -313,37 +272,6 @@ export default {
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
                     content: `https://discord.com/channels/${interaction.guild_id}/${interaction.channel.id}/${interaction.id}\n${translate.translated_text}`,
-                  },
-                })
-              }
-              case 'delete embed': {
-                let user: discord.APIUser
-                if (interaction.member) {
-                  user = interaction.member.user
-                } else if (interaction.user) {
-                  user = interaction.user
-                } else {
-                  user = {
-                    id: '00000000',
-                    discriminator: '0',
-                    username: 'unknown',
-                    global_name: 'unknown',
-                    avatar: '',
-                  }
-                }
-
-                const t = interaction.data.resolved.messages[interaction.data.target_id]
-                if (t.embeds[0].author?.name !== user.username) {
-                  return errorResponse('This message is not your sent')
-                }
-
-                const res = await resourceRequest(env, 'DELETE', `/channels/${interaction.channel.id}/messages/${t.id}`, null)
-
-                return JsonResponse({
-                  type: discord.InteractionResponseType.ChannelMessageWithSource,
-                  data: {
-                    content: `isSuccess: ${res.ok}`,
-                    flags: discord.MessageFlags.Ephemeral,
                   },
                 })
               }

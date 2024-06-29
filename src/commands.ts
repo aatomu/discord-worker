@@ -28,7 +28,7 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
   },
 	{
 		type:discord.ApplicationCommandType.User,
-		name:'embed',
+		name:'status',
 		integration_types: [discord.ApplicationIntegrationType.GuildInstall,discord.ApplicationIntegrationType.UserInstall],
 		contexts:[discord.InteractionContextType.Guild,discord.InteractionContextType.BotDM,discord.InteractionContextType.PrivateChannel]
 	},
