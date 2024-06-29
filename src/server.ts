@@ -229,6 +229,7 @@ export default {
                         thumbnail: {
                           url: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
                         },
+												color:embedSuccess
                       },
                     ],
                   },
