@@ -207,14 +207,13 @@ export default {
             switch (interaction.data.name.toLocaleLowerCase()) {
               case 'status': {
                 console.log(interaction.data)
-								const user = interaction.data.resolved.users[interaction.data.target_id]
-								const guildUser = interaction.member
+                const user = interaction.data.resolved.users[interaction.data.target_id]
+                const guildUser = interaction.member
                 console.log(user)
                 console.log(guildUser)
                 const DiscordEpoch = 1420070400000
                 const createdAt = new Date(Number(BigInt(user.id) >> 22n) + DiscordEpoch)
-                const joinedAt = new Date(guildUser=== undefined ? 0 : guildUser.joined_at)
-                const nitroType = ['None', 'Nitro Classic', 'Nitro', 'Nitro Basic']
+                const joinedAt = new Date(guildUser === undefined ? 0 : guildUser.joined_at)
                 return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
@@ -222,11 +221,14 @@ export default {
                       {
                         title: `${user.username}'s Status`,
                         description:
-                          `\`Global  :\` "${user.global_name === undefined ? '' : user.global_name}"\n` +
-                          `\`Server  :\` "${user.username === undefined ? '' : user.username}"\n` +
-                          `\`Bot     :\` ${user.bot === true ? true : false}\n` +
-                          `\`Created :\` <t:${Math.floor(createdAt.getTime() / 1000)}>\n` +
-                          `\`Joined  :\` <t:${Math.floor(joinedAt.getTime() / 1000)}>\n`,
+                          `Global:\n>  "${user.global_name === undefined ? '' : user.global_name}"\n` +
+                          `Server:\n>  "${user.username === undefined ? '' : user.username}"\n` +
+                          `Bot:\n>  ${user.bot === true ? true : false}\n` +
+                          `Created:\n>  <t:${Math.floor(createdAt.getTime() / 1000)}>\n` +
+                          `Joined:\n>  <t:${Math.floor(joinedAt.getTime() / 1000)}>\n`,
+                        thumbnail: {
+                          url: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
+                        },
                       },
                     ],
                   },
