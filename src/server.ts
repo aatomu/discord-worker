@@ -203,12 +203,42 @@ export default {
               case 'status': {
                 console.log(interaction.data)
                 const user = interaction.data.resolved.users[interaction.data.target_id]
-                const guildUser = interaction.member
-                console.log(user)
-                console.log(guildUser)
+                const members = interaction.data.resolved.members
+                let joinedAtTimestamp: string = '1970-01-01T00:00:00.000000+00:00'
+                if (members !== undefined) {
+                  joinedAtTimestamp = members[interaction.data.target_id].joined_at
+                }
+
                 const DiscordEpoch = 1420070400000
                 const createdAt = new Date(Number(BigInt(user.id) >> 22n) + DiscordEpoch)
-                const joinedAt = new Date(guildUser === undefined ? 0 : guildUser.joined_at)
+                const joinedAt = new Date(joinedAtTimestamp)
+
+                const userFlagList: { [key: string]: number } = {
+                  '`Discord Employee`': 1 << 0,
+                  '`Partnered Server Owner`': 1 << 1,
+                  '`HypeSquad Events Member`': 1 << 2,
+                  '`Bug Hunter Level 1`': 1 << 3,
+                  '`House Bravery Member`': 1 << 6,
+                  '`House Brilliance Member`': 1 << 7,
+                  '`House Balance Member`': 1 << 8,
+                  '`Early Nitro Supporter`': 1 << 9,
+                  '`Team Pseudo User`': 1 << 10,
+                  '`Bug Hunter Level 2`': 1 << 14,
+                  '`Verified Bot`': 1 << 16,
+                  '`Early Verified Bot Developer`': 1 << 17,
+                  '`Moderator Programs Alumni`': 1 << 18,
+                  '`HTTP Interaction Bot`': 1 << 19,
+                  '`Active Developer`': 1 << 22,
+                }
+                let userFlags: string[] = []
+                if (user.public_flags) {
+                  Object.keys(userFlagList).forEach((key) => {
+                    if (Number(user.public_flags) & userFlagList[key]) {
+                      userFlags.push(key)
+                    }
+                  })
+                }
+
                 return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
@@ -216,11 +246,22 @@ export default {
                       {
                         title: `${user.username}'s Status`,
                         description:
-                          `Global:\n>  "${user.username === undefined ? '' : user.username}"\n` +
-                          `Server:\n>  "${user.global_name === undefined ? '' : user.global_name}"\n` +
-                          `Bot:\n>  ${user.bot === true ? true : false}\n` +
-                          `Created:\n>  <t:${Math.floor(createdAt.getTime() / 1000)}>\n` +
-                          `Joined:\n>  <t:${Math.floor(joinedAt.getTime() / 1000)}>\n`,
+                          `Discord ID:\n` +
+                          `>  \`${user.username === undefined ? '' : user.username}\`\n` +
+                          `Display Name:\n` +
+                          `>  \`${user.global_name === undefined ? '' : user.global_name}\`\n` +
+                          `Nickname:\n` +
+                          `>  \`${members === undefined ? '' : members[interaction.data.target_id].nick}\`\n` +
+                          `Bot:\n` +
+                          `>  ${user.bot === true ? true : false}\n` +
+                          `Created:\n` +
+                          `>  <t:${Math.floor(createdAt.getTime() / 1000)}>\n` +
+                          `>  (${createdAt.toLocaleDateString('ja-Jp', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 2, timeZoneName: 'longOffset' })})\n` +
+                          `Joined:\n` +
+                          `>  <t:${Math.floor(joinedAt.getTime() / 1000)}>\n` +
+                          `>  (${joinedAt.toLocaleDateString('ja-Jp', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 2, timeZoneName: 'longOffset' })})\n` +
+                          `Flag:\n` +
+                          `>  \"${userFlags.join(',')}\"\n`,
                         thumbnail: {
                           url: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
                         },
