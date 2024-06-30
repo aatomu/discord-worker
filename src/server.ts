@@ -20,7 +20,7 @@ export default {
         const signature = request.headers.get('x-signature-ed25519')
         const timestamp = request.headers.get('x-signature-timestamp')
         const body = await request.clone().arrayBuffer()
-        const isValidRequest = signature && timestamp && verifyKey(body, signature, timestamp, env.PUBLIC_KEY)
+        const isValidRequest = signature && timestamp && await verifyKey(body, signature, timestamp, env.PUBLIC_KEY)
         if (!isValidRequest) {
           console.error('Invalid Request')
           return JsonResponse({ error: 'Bad request signature.' }, { status: 401 })
