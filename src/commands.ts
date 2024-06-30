@@ -6,14 +6,14 @@ import * as discord from 'discord-api-types/v10'
 //  * User     : 5
 //  * Message  : 5
 export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
-  {
-    type: discord.ApplicationCommandType.ChatInput,
-    name: 'text2image',
-    description: 'create image by stable diffusion!!',
-    options: [{ type: discord.ApplicationCommandOptionType.String, name: 'prompt', description: 'image create prompt', required: true, min_length: 5 }],
-		integration_types: [discord.ApplicationIntegrationType.GuildInstall,discord.ApplicationIntegrationType.UserInstall],
-		contexts:[discord.InteractionContextType.Guild,discord.InteractionContextType.BotDM,discord.InteractionContextType.PrivateChannel]
-  },
+  // {
+  //   type: discord.ApplicationCommandType.ChatInput,
+  //   name: 'text2image',
+  //   description: 'create image by stable diffusion!!',
+  //   options: [{ type: discord.ApplicationCommandOptionType.String, name: 'prompt', description: 'image create prompt', required: true, min_length: 5 }],
+	// 	integration_types: [discord.ApplicationIntegrationType.GuildInstall,discord.ApplicationIntegrationType.UserInstall],
+	// 	contexts:[discord.InteractionContextType.Guild,discord.InteractionContextType.BotDM,discord.InteractionContextType.PrivateChannel]
+  // },
   {
     type: discord.ApplicationCommandType.Message,
     name: 'translate to en',

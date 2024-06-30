@@ -9,7 +9,7 @@ export interface Env {
 }
 
 const entryPoint = 'https://discord.com/api/v10'
-const embedSuccess = 0xF58025
+const embedSuccess = 0xf58025
 const embedError = 0xff0000
 
 export default {
@@ -51,29 +51,24 @@ export default {
 
                 const option = interaction.data.options[0]
                 let prompt: string = ''
-                if ('value' in option) {
-                  prompt = option.value.toString()
+                if (option.type === discord.ApplicationCommandOptionType.String) {
+                  prompt = option.value
                 }
 
                 async function defer() {
-                  const ai = new Ai(env.AI)
                   const body = new FormData()
 
-                  for (let i = 0; i < 4; i++) {
-                    const response: Uint8Array = await ai.run<'@cf/bytedance/stable-diffusion-xl-lightning'>('@cf/bytedance/stable-diffusion-xl-lightning', {
+                  for (let i = 0; i < 1; i++) {
+                    console.log('aaaaa')
+                    const response: Uint8Array = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
                       prompt: prompt,
                     })
 
                     body.append(`files[${i}]`, new Blob([response], { type: 'image/png' }), 'image.png')
                   }
 
-                  const interactionPatch = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
-                    method: 'PATCH',
-                    headers: {
-                      Authorization: `Bot ${env.TOKEN}`,
-                    },
-                    body: body,
-                  })
+                  console.log('cccc')
+                  const interactionPatch = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, body)
                   console.log(interactionPatch.statusText, await interactionPatch.text())
                 }
                 ctx.waitUntil(defer())
@@ -229,7 +224,7 @@ export default {
                         thumbnail: {
                           url: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
                         },
-												color:embedSuccess
+                        color: embedSuccess,
                       },
                     ],
                   },
