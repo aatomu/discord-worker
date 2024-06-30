@@ -221,8 +221,8 @@ export default {
                       {
                         title: `${user.username}'s Status`,
                         description:
-                          `Global:\n>  "${user.global_name === undefined ? '' : user.global_name}"\n` +
-                          `Server:\n>  "${user.username === undefined ? '' : user.username}"\n` +
+                          `Global:\n>  "${user.username === undefined ? '' : user.username}"\n` +
+                          `Server:\n>  "${user.global_name === undefined ? '' : user.global_name}"\n` +
                           `Bot:\n>  ${user.bot === true ? true : false}\n` +
                           `Created:\n>  <t:${Math.floor(createdAt.getTime() / 1000)}>\n` +
                           `Joined:\n>  <t:${Math.floor(joinedAt.getTime() / 1000)}>\n`,
