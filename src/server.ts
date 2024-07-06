@@ -232,6 +232,12 @@ export default {
                             label: 'Jump to message',
                             url: `https://canary.discord.com/channels/${clipBoard.guildID}/${clipBoard.message.channel_id}/${clipBoard.message.id}`,
                           },
+                          {
+                            type: discord.ComponentType.Button,
+                            style: discord.ButtonStyle.Link,
+                            label: 'Jump to channel',
+                            url: `https://canary.discord.com/channels/${clipBoard.guildID}/${clipBoard.message.channel_id}`,
+                          },
                         ],
                       },
                     ],
