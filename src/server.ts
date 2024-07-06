@@ -20,7 +20,7 @@ export default {
         const signature = request.headers.get('x-signature-ed25519')
         const timestamp = request.headers.get('x-signature-timestamp')
         const body = await request.clone().arrayBuffer()
-        const isValidRequest = signature && timestamp && await verifyKey(body, signature, timestamp, env.PUBLIC_KEY)
+        const isValidRequest = signature && timestamp && (await verifyKey(body, signature, timestamp, env.PUBLIC_KEY))
         if (!isValidRequest) {
           console.error('Invalid Request')
           return JsonResponse({ error: 'Bad request signature.' }, { status: 401 })
@@ -195,6 +195,49 @@ export default {
                   },
                 })
               }
+              case 'paste': {
+                let userId = interaction.member !== undefined ? interaction.member.user.id : undefined
+                if (userId === undefined) {
+                  userId = interaction.user !== undefined ? interaction.user.id : ''
+                }
+
+                const clipBoard = await caches.default.match(new Request(`https://example.com/cache/${userId}`)).then((res) => {
+                  return res?.json() as unknown as clip
+                })
+
+                return JsonResponse({
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    embeds: [
+                      {
+                        color: embedSuccess,
+                        description: `${clipBoard.message.content}\n\nAttachments:${clipBoard.message.attachments.length}`,
+                        timestamp: clipBoard.message.timestamp,
+                        footer: {
+                          text: `clipped by #${clipBoard.channelName}`,
+                        },
+                        author: {
+                          name: clipBoard.message.author.username,
+                          icon_url: `https://cdn.discordapp.com/avatars/${clipBoard.message.author.id}/${clipBoard.message.author.avatar}.png`,
+                        },
+                      },
+                    ],
+                    components: [
+                      {
+                        type: discord.ComponentType.ActionRow,
+                        components: [
+                          {
+                            type: discord.ComponentType.Button,
+                            style: discord.ButtonStyle.Link,
+                            label: 'Jump to message',
+                            url: `https://canary.discord.com/channels/${clipBoard.guildID}/${clipBoard.message.channel_id}/${clipBoard.message.id}`,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                })
+              }
             }
           }
           // User
@@ -311,6 +354,47 @@ export default {
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
                     content: `https://discord.com/channels/${interaction.guild_id}/${interaction.channel.id}/${interaction.id}\n${translate.translated_text}`,
+                  },
+                })
+              }
+              case 'copy': {
+                const message = interaction.data.resolved.messages[interaction.data.target_id]
+								if (!message.content) {
+									return JsonResponse({
+										type: discord.InteractionResponseType.ChannelMessageWithSource,
+										data: {
+											flags: discord.MessageFlags.Ephemeral,
+											embeds: [
+												{
+													title: 'message copy failed',
+													color: embedError,
+												},
+											],
+										},
+									})
+								}
+                let userId = interaction.member !== undefined ? interaction.member.user.id : undefined
+                if (userId === undefined) {
+                  userId = interaction.user !== undefined ? interaction.user.id : ''
+                }
+
+                const clipBoard: clip = {
+                  guildID: interaction.guild_id ? interaction.guild_id : '',
+                  channelName: interaction.channel.name ? interaction.channel.name : 'DM',
+                  message: message,
+                }
+                await caches.default.put(new Request(`https://example.com/cache/${userId}`), new Response(JSON.stringify(clipBoard)))
+                console.log(userId)
+                return JsonResponse({
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    flags: discord.MessageFlags.Ephemeral,
+                    embeds: [
+                      {
+                        title: 'message copied',
+                        color: embedSuccess,
+                      },
+                    ],
                   },
                 })
               }
@@ -431,4 +515,10 @@ function hex2num(hex: string): number {
     num = 0
   }
   return num
+}
+
+interface clip {
+  channelName: string
+  message: discord.APIMessage
+  guildID: string
 }
