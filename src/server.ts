@@ -271,7 +271,7 @@ export default {
                       {
                         title: '__**Command Success**__',
                         color: embedSuccess,
-                        description: `Dice: [${diceList.join(",")}]\nSum: ${diceList.reduce((sum,value) => {return sum+value},0)}`,
+                        description: `Run: \`\`\`${quantity}d${face}\`\`\`Dice: \`\`\`[${diceList.join(", ")}]\`\`\`Sum: \`\`\`${diceList.reduce((sum,value) => {return sum+value},0)}\`\`\``,
                       },
                     ],
                   },
