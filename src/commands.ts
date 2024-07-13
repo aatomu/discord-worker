@@ -59,6 +59,31 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
     integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
     contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
   },
+  {
+    type: discord.ApplicationCommandType.ChatInput,
+    name: 'dice',
+    description: 'roll the dice',
+    integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
+    contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
+		options:[
+			{
+				type:discord.ApplicationCommandOptionType.Number,
+				name:"quantity",
+				description:"Number of dice",
+				required:true,
+				min_value:1,
+				max_value:100,
+			},
+			{
+				type:discord.ApplicationCommandOptionType.Number,
+				name:"face",
+				description:"Number of eyes on the dice",
+				required:true,
+				min_value:2,
+				max_value:100,
+			},
+		]
+  },
 ]
 
 const token = process.env.TOKEN

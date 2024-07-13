@@ -244,6 +244,39 @@ export default {
                   },
                 })
               }
+              case 'dice': {
+                if (!interaction.data.options) {
+                  return errorResponse('Not enough command options')
+                }
+
+                let face: number = 1
+                let quantity: number = 1
+                interaction.data.options.forEach((option) => {
+                  if (option.name === 'face' && option.type === discord.ApplicationCommandOptionType.Number) {
+                    face = option.value
+                  }
+                  if (option.name === 'quantity' && option.type === discord.ApplicationCommandOptionType.Number) {
+                    quantity = option.value
+                  }
+                })
+
+                let diceList = []
+                for (let i = 0; i < quantity; i++) {
+                  diceList.push(Math.floor(Math.random() * face + 1))
+                }
+                return JsonResponse({
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    embeds: [
+                      {
+                        title: '__**Command Success**__',
+                        color: embedSuccess,
+                        description: `Dice: [${diceList.join(",")}]\nSum: ${diceList.reduce((sum,value) => {return sum+value},0)}`,
+                      },
+                    ],
+                  },
+                })
+              }
             }
           }
           // User
