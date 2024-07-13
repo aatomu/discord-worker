@@ -365,20 +365,20 @@ export default {
               }
               case 'copy': {
                 const message = interaction.data.resolved.messages[interaction.data.target_id]
-								if (!message.content) {
-									return JsonResponse({
-										type: discord.InteractionResponseType.ChannelMessageWithSource,
-										data: {
-											flags: discord.MessageFlags.Ephemeral,
-											embeds: [
-												{
-													title: 'message copy failed',
-													color: embedError,
-												},
-											],
-										},
-									})
-								}
+                if (!message.content) {
+                  return JsonResponse({
+                    type: discord.InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                      flags: discord.MessageFlags.Ephemeral,
+                      embeds: [
+                        {
+                          title: 'message copy failed',
+                          color: embedError,
+                        },
+                      ],
+                    },
+                  })
+                }
                 let userId = interaction.member !== undefined ? interaction.member.user.id : undefined
                 if (userId === undefined) {
                   userId = interaction.user !== undefined ? interaction.user.id : ''
