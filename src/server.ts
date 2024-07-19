@@ -44,50 +44,50 @@ export default {
           // Slash
           if (interaction.data.type === discord.ApplicationCommandType.ChatInput) {
             switch (interaction.data.name.toLocaleLowerCase()) {
-              case 'text2image': {
-                if (!interaction.data.options) {
-                  return errorResponse('Not enough command options')
-                }
+              // case 'text2image': {
+              //   if (!interaction.data.options) {
+              //     return errorResponse('Not enough command options')
+              //   }
 
-                const option = interaction.data.options[0]
-                let prompt: string = ''
-                if (option.type === discord.ApplicationCommandOptionType.String) {
-                  prompt = option.value
-                }
+              //   const option = interaction.data.options[0]
+              //   let prompt: string = ''
+              //   if (option.type === discord.ApplicationCommandOptionType.String) {
+              //     prompt = option.value
+              //   }
 
-                async function defer() {
-                  const body = new FormData()
+              //   async function defer() {
+              //     const body = new FormData()
 
-                  for (let i = 0; i < 1; i++) {
-                    console.log('aaaaa')
-                    const response: Uint8Array = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
-                      prompt: prompt,
-                    })
+              //     for (let i = 0; i < 1; i++) {
+              //       console.log('aaaaa')
+              //       const response: Uint8Array = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
+              //         prompt: prompt,
+              //       })
 
-                    body.append(`files[${i}]`, new Blob([response], { type: 'image/png' }), 'image.png')
-                  }
+              //       body.append(`files[${i}]`, new Blob([response], { type: 'image/png' }), 'image.png')
+              //     }
 
-                  console.log('cccc')
-                  const interactionPatch = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, body)
-                  console.log(interactionPatch.statusText, await interactionPatch.text())
-                }
-                ctx.waitUntil(defer())
+              //     console.log('cccc')
+              //     const interactionPatch = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, body)
+              //     console.log(interactionPatch.statusText, await interactionPatch.text())
+              //   }
+              //   ctx.waitUntil(defer())
 
-                const data: discord.APIInteractionResponseCallbackData = {
-                  embeds: [
-                    {
-                      title: '__**Command Success**__',
-                      color: embedSuccess,
-                      description: `Prompt:\n \`\`\`${prompt}\`\`\``,
-                    },
-                  ],
-                }
+              //   const data: discord.APIInteractionResponseCallbackData = {
+              //     embeds: [
+              //       {
+              //         title: '__**Command Success**__',
+              //         color: embedSuccess,
+              //         description: `Prompt:\n \`\`\`${prompt}\`\`\``,
+              //       },
+              //     ],
+              //   }
 
-                return JsonResponse({
-                  type: discord.InteractionResponseType.ChannelMessageWithSource,
-                  data: data,
-                })
-              }
+              //   return JsonResponse({
+              //     type: discord.InteractionResponseType.ChannelMessageWithSource,
+              //     data: data,
+              //   })
+              // }
               case 'embed': {
                 return JsonResponse({
                   type: discord.InteractionResponseType.Modal,
