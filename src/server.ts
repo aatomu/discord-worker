@@ -423,8 +423,8 @@ export default {
                   message: message,
                 }
                 await caches.default.put(new Request(`https://example.com/cache/${userId}`), new Response(JSON.stringify(clipBoard)))
-                console.log(userId)
-                return JsonResponse({
+
+								return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
                     flags: discord.MessageFlags.Ephemeral,
