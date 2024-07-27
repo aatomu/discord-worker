@@ -84,6 +84,30 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
 			},
 		]
   },
+  {
+    type: discord.ApplicationCommandType.ChatInput,
+    name: 'base_conv',
+    description: 'Base conversion (Bin Dec Hex)',
+    integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
+    contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
+		options:[
+			{
+				type:discord.ApplicationCommandOptionType.String,
+				name:"bin",
+				description:"from binary"
+			},
+			{
+				type:discord.ApplicationCommandOptionType.String,
+				name:"dec",
+				description:"from decimal"
+			},
+			{
+				type:discord.ApplicationCommandOptionType.String,
+				name:"hex",
+				description:"from Hexadecimal"
+			},
+		]
+  },
 ]
 
 const token = process.env.TOKEN

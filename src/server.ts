@@ -271,9 +271,49 @@ export default {
                       {
                         title: '__**Command Success**__',
                         color: embedSuccess,
-                        description: `Run: \`\`\`${quantity}d${face}\`\`\`Dice: \`\`\`[${diceList.join(", ")}]\`\`\`Sum: \`\`\`${diceList.reduce((sum,value) => {return sum+value},0)}\`\`\``,
+                        description: `Run: \`\`\`${quantity}d${face}\`\`\`Dice: \`\`\`[${diceList.join(', ')}]\`\`\`Sum: \`\`\`${diceList.reduce((sum, value) => {
+                          return sum + value
+                        }, 0)}\`\`\``,
                       },
                     ],
+                  },
+                })
+              }
+              case 'base_conv': {
+                if (!interaction.data.options) {
+                  return errorResponse('Not enough command options')
+                }
+
+                let embeds: discord.APIEmbed[] = []
+
+                interaction.data.options.forEach((option) => {
+                  if (option.name === 'bin' && option.type === discord.ApplicationCommandOptionType.String) {
+                    let input = option.value
+                    embeds.push({
+                      color: embedSuccess,
+                      description: `Bin: \`\`\`${toBin(parseInt(input,2))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input,2))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input,2))}\`\`\``,
+                    })
+                  }
+                  if (option.name === 'dec' && option.type === discord.ApplicationCommandOptionType.String) {
+                    let input = option.value
+                    embeds.push({
+                      color: embedSuccess,
+                      description: `Bin: \`\`\`${toBin(parseInt(input,10))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input,10))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input,10))}\`\`\``,
+                    })
+                  }
+                  if (option.name === 'hex' && option.type === discord.ApplicationCommandOptionType.String) {
+                    let input = option.value
+                    embeds.push({
+                      color: embedSuccess,
+                      description: `Bin: \`\`\`${toBin(parseInt(input,16))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input,16))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input,16))}\`\`\``,
+                    })
+                  }
+                })
+
+                return JsonResponse({
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    embeds: embeds
                   },
                 })
               }
@@ -424,7 +464,7 @@ export default {
                 }
                 await caches.default.put(new Request(`https://example.com/cache/${userId}`), new Response(JSON.stringify(clipBoard)))
 
-								return JsonResponse({
+                return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
                     flags: discord.MessageFlags.Ephemeral,
@@ -560,4 +600,37 @@ interface clip {
   channelName: string
   message: discord.APIMessage
   guildID: string
+}
+
+function toBin(n:number):string {
+	let hex:string = n.toString(2)
+	let result:string = ""
+
+	while (hex.length > 0) {
+		result = hex.slice(-8) +" " + result
+		hex = hex.slice(0,-8)
+	}
+	return result
+}
+
+function toDec(n:number):string {
+	let hex:string = n.toString(10)
+	let result:string = ""
+
+	while (hex.length > 0) {
+		result = hex.slice(-3) +" " + result
+		hex = hex.slice(0,-3)
+	}
+	return result
+}
+
+function toHex(n:number):string {
+	let hex:string = n.toString(16)
+	let result:string = ""
+
+	while (hex.length > 0) {
+		result = hex.slice(-2) +" " + result
+		hex = hex.slice(0,-2)
+	}
+	return result
 }
