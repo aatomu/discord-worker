@@ -375,12 +375,11 @@ export default {
                         description: `
 \`\`\`
 Address   : ${toIP(address)}
-Netmask   : ${toIP(netmask)}/${netmask}
+Netmask   : ${toIP(netmask)}/${netmask_cidr}
 ${'='.repeat(20)}
 Network   : ${toIP(network)}
 Broadcast : ${toIP(broadcast)}
 Comment   : ${comment.join(", ")}
-IP info   : https://ipinfo.io/${address}
 \`\`\``,
                       },
                     ],
