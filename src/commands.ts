@@ -108,6 +108,31 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
 			},
 		]
   },
+	{
+		type: discord.ApplicationCommandType.ChatInput,
+    name: 'ip_calc',
+    description: 'calc value',
+    integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
+    contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
+		options:[
+			{
+				type:discord.ApplicationCommandOptionType.String,
+				name:"address",
+				description:"ex: 192.168.1.0",
+				min_length:7,
+				max_length:15,
+				required:true
+			},
+			{
+				type:discord.ApplicationCommandOptionType.Number,
+				name:"netmask",
+				description:"ex: 24",
+				min_value:1,
+				max_value:32,
+				required:true
+			},
+		]
+	}
 ]
 
 const token = process.env.TOKEN

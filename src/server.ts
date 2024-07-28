@@ -291,21 +291,21 @@ export default {
                     let input = option.value
                     embeds.push({
                       color: embedSuccess,
-                      description: `Bin: \`\`\`${toBin(parseInt(input,2))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input,2))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input,2))}\`\`\``,
+                      description: `Bin: \`\`\`${toBin(parseInt(input, 2))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input, 2))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input, 2))}\`\`\``,
                     })
                   }
                   if (option.name === 'dec' && option.type === discord.ApplicationCommandOptionType.String) {
                     let input = option.value
                     embeds.push({
                       color: embedSuccess,
-                      description: `Bin: \`\`\`${toBin(parseInt(input,10))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input,10))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input,10))}\`\`\``,
+                      description: `Bin: \`\`\`${toBin(parseInt(input, 10))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input, 10))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input, 10))}\`\`\``,
                     })
                   }
                   if (option.name === 'hex' && option.type === discord.ApplicationCommandOptionType.String) {
                     let input = option.value
                     embeds.push({
                       color: embedSuccess,
-                      description: `Bin: \`\`\`${toBin(parseInt(input,16))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input,16))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input,16))}\`\`\``,
+                      description: `Bin: \`\`\`${toBin(parseInt(input, 16))}\`\`\`\nDec: \`\`\`${toDec(parseInt(input, 16))}\`\`\`\nHex: \`\`\`${toHex(parseInt(input, 16))}\`\`\``,
                     })
                   }
                 })
@@ -313,7 +313,77 @@ export default {
                 return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
-                    embeds: embeds
+                    embeds: embeds,
+                  },
+                })
+              }
+              case 'ip_calc': {
+                if (!interaction.data.options) {
+                  return errorResponse('Not enough command options')
+                }
+
+                let address: number[] = [0, 0, 0, 0] // 192.168.1.1
+                let netmask: number[] = [0, 0, 0, 0] // 255.255.255.0
+                let netmask_cidr: number = 0 // 24
+                let network: number[] = [0, 0, 0, 0] // 192.168.1.0
+                let broadcast: number[] = [0, 0, 0, 0] // 192.168.1.255
+                let comment: string[] = [] // ["Class C","Private Address"]
+
+                interaction.data.options.forEach((option) => {
+                  if (option.name === 'address' && option.type === discord.ApplicationCommandOptionType.String) {
+                    const octet = option.value.split('.')
+
+                    address = [parseInt(octet[0], 10), parseInt(octet[1], 10), parseInt(octet[2], 10), parseInt(octet[3], 10)]
+                  }
+                  if (option.name === 'netmask' && option.type === discord.ApplicationCommandOptionType.Number) {
+                    netmask_cidr = option.value
+                    const bits = '1'.repeat(netmask_cidr) + '0'.repeat(32 - netmask_cidr)
+
+                    netmask = [parseInt(bits.slice(0, 8), 2), parseInt(bits.slice(8, 16), 2), parseInt(bits.slice(16, 24), 2), parseInt(bits.slice(24, 32), 2)]
+                  }
+                })
+
+                network = [address[0] & netmask[0], address[1] & netmask[1], address[2] & netmask[2], address[3] & netmask[3]]
+                broadcast = [network[0] | (~netmask[0] & 255), network[1] | (~netmask[1] & 255), network[2] | (~netmask[2] & 255), network[3] | (~netmask[3] & 255)]
+
+                if (network[0] >= 0 && network[0] <=127) {
+                  comment.push("Class A(/8-/32)")
+                }
+                if (network[0] >= 128 && network[0] <=191) {
+                  comment.push("Class B(/16-/32)")
+                }
+                if (network[0] >= 192 && network[0] <=223) {
+                  comment.push("Class C(/24-/32)")
+                }
+                if (network[0] >= 224 && network[0] <=239) {
+                  comment.push("Class D")
+                }
+
+                if (network[0] == 127) {
+                  comment.push("Loop Back")
+                }
+                if (network[0] == 10 ||network[0] == 172 ||network[0] == 192) {
+                  comment.push("Private Net")
+                }
+
+                return JsonResponse({
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    embeds: [
+                      {
+                        color: embedSuccess,
+                        description: `
+\`\`\`
+Address   : ${toIP(address)}
+Netmask   : ${toIP(netmask)}/${netmask}
+${'='.repeat(20)}
+Network   : ${toIP(network)}
+Broadcast : ${toIP(broadcast)}
+Comment   : ${comment.join(", ")}
+IP info   : https://ipinfo.io/${address}
+\`\`\``,
+                      },
+                    ],
                   },
                 })
               }
@@ -602,35 +672,44 @@ interface clip {
   guildID: string
 }
 
-function toBin(n:number):string {
-	let hex:string = n.toString(2)
-	let result:string = ""
+function toBin(n: number): string {
+  let hex: string = n.toString(2)
+  let result: string = ''
 
-	while (hex.length > 0) {
-		result = hex.slice(-8) +" " + result
-		hex = hex.slice(0,-8)
-	}
-	return result
+  while (hex.length > 0) {
+    result = hex.slice(-8) + ' ' + result
+    hex = hex.slice(0, -8)
+  }
+  return result
 }
 
-function toDec(n:number):string {
-	let hex:string = n.toString(10)
-	let result:string = ""
+function toDec(n: number): string {
+  let hex: string = n.toString(10)
+  let result: string = ''
 
-	while (hex.length > 0) {
-		result = hex.slice(-3) +" " + result
-		hex = hex.slice(0,-3)
-	}
-	return result
+  while (hex.length > 0) {
+    result = hex.slice(-3) + ' ' + result
+    hex = hex.slice(0, -3)
+  }
+  return result
 }
 
-function toHex(n:number):string {
-	let hex:string = n.toString(16)
-	let result:string = ""
+function toHex(n: number): string {
+  let hex: string = n.toString(16)
+  let result: string = ''
 
-	while (hex.length > 0) {
-		result = hex.slice(-2) +" " + result
-		hex = hex.slice(0,-2)
-	}
-	return result
+  while (hex.length > 0) {
+    result = hex.slice(-2) + ' ' + result
+    hex = hex.slice(0, -2)
+  }
+  return result
+}
+
+function toIP(ip: number[]): string {
+  let ip_string: string[] = []
+
+  ip.forEach((octet) => {
+    ip_string.push(octet.toString(10).padStart(3, ' '))
+  })
+  return ip_string.join('.')
 }
