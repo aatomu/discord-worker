@@ -205,23 +205,26 @@ export default {
                   return res?.json() as unknown as clip
                 })
 
-                return JsonResponse({
+								const embeds:discord.APIEmbed[] = [
+									{
+										color: embedSuccess,
+										description: `${clipBoard.message.content !== "" ? clipBoard.message.content : "__**No Message Content**__"}\n\nAttachments:${clipBoard.message.attachments.length}`,
+										timestamp: clipBoard.message.timestamp,
+										footer: {
+											text: `clipped by #${clipBoard.channelName}`,
+										},
+										author: {
+											name: clipBoard.message.author.username,
+											icon_url: `https://cdn.discordapp.com/avatars/${clipBoard.message.author.id}/${clipBoard.message.author.avatar}.png`,
+										},
+									},
+								]
+								embeds.push(...clipBoard.message.embeds)
+
+								return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
-                    embeds: [
-                      {
-                        color: embedSuccess,
-                        description: `${clipBoard.message.content}\n\nAttachments:${clipBoard.message.attachments.length}`,
-                        timestamp: clipBoard.message.timestamp,
-                        footer: {
-                          text: `clipped by #${clipBoard.channelName}`,
-                        },
-                        author: {
-                          name: clipBoard.message.author.username,
-                          icon_url: `https://cdn.discordapp.com/avatars/${clipBoard.message.author.id}/${clipBoard.message.author.avatar}.png`,
-                        },
-                      },
-                    ],
+                    embeds: embeds,
                     components: [
                       {
                         type: discord.ComponentType.ActionRow,
@@ -507,21 +510,8 @@ Comment   : ${comment.join(', ')}
               }
               case 'copy': {
                 const message = interaction.data.resolved.messages[interaction.data.target_id]
-                if (!message.content) {
-                  return JsonResponse({
-                    type: discord.InteractionResponseType.ChannelMessageWithSource,
-                    data: {
-                      flags: discord.MessageFlags.Ephemeral,
-                      embeds: [
-                        {
-                          title: 'message copy failed',
-                          color: embedError,
-                        },
-                      ],
-                    },
-                  })
-                }
-                let userId = interaction.member !== undefined ? interaction.member.user.id : undefined
+
+								let userId = interaction.member !== undefined ? interaction.member.user.id : undefined
                 if (userId === undefined) {
                   userId = interaction.user !== undefined ? interaction.user.id : ''
                 }
