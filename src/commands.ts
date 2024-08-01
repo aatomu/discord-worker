@@ -65,24 +65,24 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
     description: 'roll the dice',
     integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
     contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
-		options:[
-			{
-				type:discord.ApplicationCommandOptionType.Number,
-				name:"quantity",
-				description:"Number of dice",
-				required:true,
-				min_value:1,
-				max_value:100,
-			},
-			{
-				type:discord.ApplicationCommandOptionType.Number,
-				name:"face",
-				description:"Number of eyes on the dice",
-				required:true,
-				min_value:2,
-				max_value:100,
-			},
-		]
+    options: [
+      {
+        type: discord.ApplicationCommandOptionType.Number,
+        name: 'quantity',
+        description: 'Number of dice',
+        required: true,
+        min_value: 1,
+        max_value: 100,
+      },
+      {
+        type: discord.ApplicationCommandOptionType.Number,
+        name: 'face',
+        description: 'Number of eyes on the dice',
+        required: true,
+        min_value: 2,
+        max_value: 100,
+      },
+    ],
   },
   {
     type: discord.ApplicationCommandType.ChatInput,
@@ -90,49 +90,49 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
     description: 'Base conversion (Bin Dec Hex)',
     integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
     contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
-		options:[
-			{
-				type:discord.ApplicationCommandOptionType.String,
-				name:"bin",
-				description:"from binary"
-			},
-			{
-				type:discord.ApplicationCommandOptionType.String,
-				name:"dec",
-				description:"from decimal"
-			},
-			{
-				type:discord.ApplicationCommandOptionType.String,
-				name:"hex",
-				description:"from Hexadecimal"
-			},
-		]
+    options: [
+      {
+        type: discord.ApplicationCommandOptionType.String,
+        name: 'bin',
+        description: 'from binary',
+      },
+      {
+        type: discord.ApplicationCommandOptionType.String,
+        name: 'dec',
+        description: 'from decimal',
+      },
+      {
+        type: discord.ApplicationCommandOptionType.String,
+        name: 'hex',
+        description: 'from Hexadecimal',
+      },
+    ],
   },
-	{
-		type: discord.ApplicationCommandType.ChatInput,
+  {
+    type: discord.ApplicationCommandType.ChatInput,
     name: 'ip_calc',
     description: 'calc value',
     integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
     contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
-		options:[
-			{
-				type:discord.ApplicationCommandOptionType.String,
-				name:"address",
-				description:"ex: 192.168.1.0",
-				min_length:7,
-				max_length:15,
-				required:true
-			},
-			{
-				type:discord.ApplicationCommandOptionType.Number,
-				name:"netmask",
-				description:"ex: 24",
-				min_value:1,
-				max_value:32,
-				required:true
-			},
-		]
-	}
+    options: [
+      {
+        type: discord.ApplicationCommandOptionType.String,
+        name: 'address',
+        description: 'ex: 192.168.1.0',
+        min_length: 7,
+        max_length: 15,
+        required: true,
+      },
+      {
+        type: discord.ApplicationCommandOptionType.Number,
+        name: 'netmask',
+        description: 'ex: 24',
+        min_value: 1,
+        max_value: 32,
+        required: true,
+      },
+    ],
+  },
 ]
 
 const token = process.env.TOKEN

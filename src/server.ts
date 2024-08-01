@@ -346,24 +346,24 @@ export default {
                 network = [address[0] & netmask[0], address[1] & netmask[1], address[2] & netmask[2], address[3] & netmask[3]]
                 broadcast = [network[0] | (~netmask[0] & 255), network[1] | (~netmask[1] & 255), network[2] | (~netmask[2] & 255), network[3] | (~netmask[3] & 255)]
 
-                if (network[0] >= 0 && network[0] <=127) {
-                  comment.push("Class A(/8-/32)")
+                if (network[0] >= 0 && network[0] <= 127) {
+                  comment.push('Class A(/8-/32)')
                 }
-                if (network[0] >= 128 && network[0] <=191) {
-                  comment.push("Class B(/16-/32)")
+                if (network[0] >= 128 && network[0] <= 191) {
+                  comment.push('Class B(/16-/32)')
                 }
-                if (network[0] >= 192 && network[0] <=223) {
-                  comment.push("Class C(/24-/32)")
+                if (network[0] >= 192 && network[0] <= 223) {
+                  comment.push('Class C(/24-/32)')
                 }
-                if (network[0] >= 224 && network[0] <=239) {
-                  comment.push("Class D")
+                if (network[0] >= 224 && network[0] <= 239) {
+                  comment.push('Class D')
                 }
 
                 if (network[0] == 127) {
-                  comment.push("Loop Back")
+                  comment.push('Loop Back')
                 }
-                if (network[0] == 10 ||network[0] == 172 ||network[0] == 192) {
-                  comment.push("Private Net")
+                if (network[0] == 10 || network[0] == 172 || network[0] == 192) {
+                  comment.push('Private Net')
                 }
 
                 return JsonResponse({
@@ -379,7 +379,7 @@ Netmask   : ${toIP(netmask)}/${netmask_cidr}
 ${'='.repeat(20)}
 Network   : ${toIP(network)}
 Broadcast : ${toIP(broadcast)}
-Comment   : ${comment.join(", ")}
+Comment   : ${comment.join(', ')}
 \`\`\``,
                       },
                     ],
