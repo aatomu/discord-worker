@@ -168,25 +168,25 @@ export default {
                           {
                             type: discord.ComponentType.Button,
                             custom_id: 'a',
-                            label: 'aiueo',
+                            label: 'example',
                             style: discord.ButtonStyle.Danger,
                           },
                           {
                             type: discord.ComponentType.Button,
                             custom_id: 'b',
-                            label: 'aiueo',
+                            label: 'example',
                             style: discord.ButtonStyle.Primary,
                           },
                           {
                             type: discord.ComponentType.Button,
                             custom_id: 'c',
-                            label: 'aiueo',
+                            label: 'example',
                             style: discord.ButtonStyle.Secondary,
                           },
                           {
                             type: discord.ComponentType.Button,
                             custom_id: 'd',
-                            label: 'aiueo',
+                            label: 'example',
                             style: discord.ButtonStyle.Success,
                           },
                         ],
@@ -205,23 +205,23 @@ export default {
                   return res?.json() as unknown as clip
                 })
 
-								const embeds:discord.APIEmbed[] = [
-									{
-										color: embedSuccess,
-										description: `${clipBoard.message.content !== "" ? clipBoard.message.content : "__**No Message Content**__"}\n\nAttachments:${clipBoard.message.attachments.length}`,
-										timestamp: clipBoard.message.timestamp,
-										footer: {
-											text: `clipped by #${clipBoard.channelName}`,
-										},
-										author: {
-											name: clipBoard.message.author.username,
-											icon_url: `https://cdn.discordapp.com/avatars/${clipBoard.message.author.id}/${clipBoard.message.author.avatar}.png`,
-										},
-									},
-								]
-								embeds.push(...clipBoard.message.embeds)
+                const embeds: discord.APIEmbed[] = [
+                  {
+                    color: embedSuccess,
+                    description: `${clipBoard.message.content !== '' ? clipBoard.message.content : '__**No Message Content**__'}\n\nAttachments:${clipBoard.message.attachments.length}`,
+                    timestamp: clipBoard.message.timestamp,
+                    footer: {
+                      text: `clipped by #${clipBoard.channelName}`,
+                    },
+                    author: {
+                      name: clipBoard.message.author.username,
+                      icon_url: `https://cdn.discordapp.com/avatars/${clipBoard.message.author.id}/${clipBoard.message.author.avatar}.png`,
+                    },
+                  },
+                ]
+                embeds.push(...clipBoard.message.embeds)
 
-								return JsonResponse({
+                return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
                     embeds: embeds,
@@ -389,6 +389,157 @@ Comment   : ${comment.join(', ')}
                   },
                 })
               }
+              case 'image': {
+                if (!interaction.data.options) {
+                  return errorResponse('Not enough command options')
+                }
+
+                let rgb: number[] = [0xff, 0xff, 0xff]
+                const canvasSizeX = 200
+                const canvasSizeY = 100
+                // zlib Blocksize Max: 65535bytes
+                // X*Y*3 < 65535
+
+                interaction.data.options.forEach((option) => {
+                  if (option.name === 'color' && option.type === discord.ApplicationCommandOptionType.String) {
+                    rgb = [parseInt(option.value.substring(0, 2), 16), parseInt(option.value.substring(2, 4), 16), parseInt(option.value.substring(4, 6), 16)]
+                  }
+                })
+
+                function CRC32(buf: any[], crc = 0): Uint8Array {
+                  const crct = [...Array(256)].map((_, n) => [...Array(8)].reduce((c, _, k) => (c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1), n))
+                  const crcNum = buf.reduce((c, x) => crct[(c ^ x) & 0xff] ^ (c >>> 8), crc ^ -1) ^ -1
+                  const crcArray = new Uint8Array(4).map((_, i) => {
+                    return crcNum >>> (i * 8)
+                  })
+                  return crcArray.reverse()
+                }
+                function Adler32(data: number[]): number[] {
+                  let a = 1
+                  let b = 0
+
+                  for (let i = 0; i < data.length; i++) {
+                    a = (a + data[i]) % 65521
+                    b = (b + a) % 65521
+                  }
+
+                  const adler = (b << 16) | a
+                  return [(adler >>> 24) & 0xff, (adler >>> 16) & 0xff, (adler >>> 8) & 0xff, (adler >>> 0) & 0xff]
+                }
+
+                const pngHeader: Uint8Array = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+                const pngIHDRData: number[] = [
+                  0x00,
+                  0x00,
+                  0x00,
+                  0x0d, // chunk len   : 13
+                  0x49,
+                  0x48,
+                  0x44,
+                  0x52, // chunk name  : IHDR
+                  (canvasSizeX >>> 24) & 0xff,
+                  (canvasSizeX >>> 16) & 0xff,
+                  (canvasSizeX >>> 8) & 0xff,
+                  canvasSizeX & 0xff, // image width : canvasSizeX
+                  (canvasSizeY >>> 24) & 0xff,
+                  (canvasSizeY >>> 16) & 0xff,
+                  (canvasSizeY >>> 8) & 0xff,
+                  canvasSizeY & 0xff, // image height : canvasSizeY
+                  0x08, // color depth : 8bit
+                  0x02, // color type  : RGB color
+                  0x00, // compression : deflate
+                  0x00, // image filter: none
+                  0x00, // inter race  : progressive
+                ]
+                const pngIHDR: Uint8Array = new Uint8Array([...pngIHDRData, ...CRC32(pngIHDRData.slice(4))])
+
+                let canvas = []
+                for (let y = 0; y < canvasSizeY; y++) {
+									canvas.push(0x00) // line filter: none
+									for (let x = 0; x < canvasSizeX; x++) {
+										canvas.push(...rgb) // line filter: none
+									}
+                }
+
+                const zlibHeader = [0x08, 0x1d]
+                const zlibBlockHeader = [0x01, (canvas.length >>> 0) & 0xff, (canvas.length >>> 8) & 0xff, (~canvas.length >>> 0) & 0xff, (~canvas.length >>> 8) & 0xff]
+                const zlibBlockFooter = Adler32(canvas)
+                const data = [...zlibHeader, ...zlibBlockHeader, ...canvas, ...zlibBlockFooter]
+                const pngIDATData: number[] = [
+                  (data.length >>> 24) & 0xff,
+                  (data.length >>> 16) & 0xff,
+                  (data.length >>> 8) & 0xff,
+                  data.length & 0xff, // chunk len
+                  0x49,
+                  0x44,
+                  0x41,
+                  0x54, // chunk name  : IDAT
+                  ...data, // data...
+                ]
+                const pngIDAT: Uint8Array = new Uint8Array([...pngIDATData, ...CRC32(pngIDATData.slice(4))])
+
+                const pngIEND = [
+                  0x00,
+                  0x00,
+                  0x00,
+                  0x00, // chunk len   : 0
+                  0x49,
+                  0x45,
+                  0x4e,
+                  0x44, // chunk name  : IEND
+                  0xae,
+                  0x42,
+                  0x60,
+                  0x82, // CRC32
+                ]
+
+                const pngRaw: Uint8Array = new Uint8Array([...pngHeader, ...pngIHDR, ...pngIDAT, ...pngIEND])
+
+                async function defer() {
+                  const body = new FormData()
+                  body.append(`files[0]`, new Blob([pngRaw], { type: 'image/png' }), 'color.png')
+                  // const res = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, body)
+                  const res = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
+                    method: 'PATCH',
+                    headers: {
+                      Authorization: `Bot ${env.TOKEN}`,
+                    },
+                    body: body,
+                  })
+                  console.log(res.statusText, await res.text())
+                }
+                ctx.waitUntil(defer())
+                return JsonResponse({
+                  type: discord.InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    embeds: [
+                      {
+                        color: embedSuccess,
+												title:"Color Preview",
+												fields:[
+													{
+														name:"Hex Color",
+														value: `\`\`\`#${rgb[0].toString(16)}${rgb[1].toString(16)}${rgb[2].toString(16)}\`\`\``
+													},
+													{
+														name:"Decimal Color",
+														value: `\`\`\`${(rgb[0]<<16|rgb[1]<<8|rgb[2])}\`\`\``
+													},
+													{
+														name:"RGB Color",
+														value: `\`\`\`${rgb[0]}, ${rgb[1]}, ${rgb[2]}\`\`\``
+													},
+												],
+                        image: {
+                          url: 'attachment://color.png',
+													width:1280,
+													height:720
+                        },
+                      },
+                    ],
+                  },
+                })
+              }
             }
           }
           // User
@@ -511,7 +662,7 @@ Comment   : ${comment.join(', ')}
               case 'copy': {
                 const message = interaction.data.resolved.messages[interaction.data.target_id]
 
-								let userId = interaction.member !== undefined ? interaction.member.user.id : undefined
+                let userId = interaction.member !== undefined ? interaction.member.user.id : undefined
                 if (userId === undefined) {
                   userId = interaction.user !== undefined ? interaction.user.id : ''
                 }

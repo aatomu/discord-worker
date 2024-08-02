@@ -133,6 +133,23 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
       },
     ],
   },
+  {
+    type: discord.ApplicationCommandType.ChatInput,
+    name: 'image',
+    description: 'generate image by hex color',
+    integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
+    contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
+    options: [
+      {
+        type: discord.ApplicationCommandOptionType.String,
+        name: 'color',
+        description: 'ex: ffffff',
+        min_length: 6,
+        max_length: 6,
+        required: true,
+      },
+    ],
+  },
 ]
 
 const token = process.env.TOKEN
