@@ -455,10 +455,10 @@ Comment   : ${comment.join(', ')}
 
                 let canvas = []
                 for (let y = 0; y < canvasSizeY; y++) {
-									canvas.push(0x00) // line filter: none
-									for (let x = 0; x < canvasSizeX; x++) {
-										canvas.push(...rgb) // line filter: none
-									}
+                  canvas.push(0x00) // line filter: none
+                  for (let x = 0; x < canvasSizeX; x++) {
+                    canvas.push(...rgb) // line filter: none
+                  }
                 }
 
                 const zlibHeader = [0x08, 0x1d]
@@ -498,14 +498,7 @@ Comment   : ${comment.join(', ')}
                 async function defer() {
                   const body = new FormData()
                   body.append(`files[0]`, new Blob([pngRaw], { type: 'image/png' }), 'color.png')
-                  // const res = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, body)
-                  const res = await fetch(`${entryPoint}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {
-                    method: 'PATCH',
-                    headers: {
-                      Authorization: `Bot ${env.TOKEN}`,
-                    },
-                    body: body,
-                  })
+                  const res = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`,{}, body)
                   console.log(res.statusText, await res.text())
                 }
                 ctx.waitUntil(defer())
@@ -515,25 +508,25 @@ Comment   : ${comment.join(', ')}
                     embeds: [
                       {
                         color: embedSuccess,
-												title:"Color Preview",
-												fields:[
-													{
-														name:"Hex Color",
-														value: `\`\`\`#${rgb[0].toString(16)}${rgb[1].toString(16)}${rgb[2].toString(16)}\`\`\``
-													},
-													{
-														name:"Decimal Color",
-														value: `\`\`\`${(rgb[0]<<16|rgb[1]<<8|rgb[2])}\`\`\``
-													},
-													{
-														name:"RGB Color",
-														value: `\`\`\`${rgb[0]}, ${rgb[1]}, ${rgb[2]}\`\`\``
-													},
-												],
+                        title: 'Color Preview',
+                        fields: [
+                          {
+                            name: 'Hex Color',
+                            value: `\`\`\`#${rgb[0].toString(16)}${rgb[1].toString(16)}${rgb[2].toString(16)}\`\`\``,
+                          },
+                          {
+                            name: 'Decimal Color',
+                            value: `\`\`\`${(rgb[0] << 16) | (rgb[1] << 8) | rgb[2]}\`\`\``,
+                          },
+                          {
+                            name: 'RGB Color',
+                            value: `\`\`\`${rgb[0]}, ${rgb[1]}, ${rgb[2]}\`\`\``,
+                          },
+                        ],
                         image: {
                           url: 'attachment://color.png',
-													width:1280,
-													height:720
+                          width: 1280,
+                          height: 720,
                         },
                       },
                     ],
@@ -779,16 +772,15 @@ function errorResponse(message: string): Response {
   })
 }
 
-async function resourceRequest(env: Env, method: string, point: string, body: Object | null) {
+async function resourceRequest(env: Env, method: string, point: string, header: HeadersInit, body: any | null) {
   const init: RequestInit = {
     method: method,
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bot ${env.TOKEN}`,
-    },
+    }||header,
   }
   if (body != null) {
-    init.body = JSON.stringify(body)
+    init.body = body
   }
 
   return fetch(`${entryPoint}${point}`, init)
