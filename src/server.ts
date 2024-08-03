@@ -395,10 +395,8 @@ Comment   : ${comment.join(', ')}
                 }
 
                 let rgb: number[] = [0xff, 0xff, 0xff]
-                const canvasSizeX = 200
-                const canvasSizeY = 100
-                // zlib Blocksize Max: 65535bytes
-                // X*Y*3 < 65535
+                const canvasSizeX = 1280
+                const canvasSizeY = 720
 
                 interaction.data.options.forEach((option) => {
                   if (option.name === 'color' && option.type === discord.ApplicationCommandOptionType.String) {
@@ -406,52 +404,26 @@ Comment   : ${comment.join(', ')}
                   }
                 })
 
-                function CRC32(buf: any[], crc = 0): Uint8Array {
-                  const crct = [...Array(256)].map((_, n) => [...Array(8)].reduce((c, _, k) => (c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1), n))
-                  const crcNum = buf.reduce((c, x) => crct[(c ^ x) & 0xff] ^ (c >>> 8), crc ^ -1) ^ -1
-                  const crcArray = new Uint8Array(4).map((_, i) => {
-                    return crcNum >>> (i * 8)
-                  })
-                  return crcArray.reverse()
-                }
-                function Adler32(data: number[]): number[] {
-                  let a = 1
-                  let b = 0
-
-                  for (let i = 0; i < data.length; i++) {
-                    a = (a + data[i]) % 65521
-                    b = (b + a) % 65521
-                  }
-
-                  const adler = (b << 16) | a
-                  return [(adler >>> 24) & 0xff, (adler >>> 16) & 0xff, (adler >>> 8) & 0xff, (adler >>> 0) & 0xff]
-                }
-
-                const pngHeader: Uint8Array = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
-                const pngIHDRData: number[] = [
-                  0x00,
-                  0x00,
-                  0x00,
-                  0x0d, // chunk len   : 13
-                  0x49,
-                  0x48,
-                  0x44,
-                  0x52, // chunk name  : IHDR
-                  (canvasSizeX >>> 24) & 0xff,
-                  (canvasSizeX >>> 16) & 0xff,
-                  (canvasSizeX >>> 8) & 0xff,
-                  canvasSizeX & 0xff, // image width : canvasSizeX
-                  (canvasSizeY >>> 24) & 0xff,
-                  (canvasSizeY >>> 16) & 0xff,
-                  (canvasSizeY >>> 8) & 0xff,
-                  canvasSizeY & 0xff, // image height : canvasSizeY
-                  0x08, // color depth : 8bit
-                  0x02, // color type  : RGB color
-                  0x00, // compression : deflate
-                  0x00, // image filter: none
-                  0x00, // inter race  : progressive
-                ]
-                const pngIHDR: Uint8Array = new Uint8Array([...pngIHDRData, ...CRC32(pngIHDRData.slice(4))])
+                const pngBinary = new Png()
+                // IHDR / png info
+                pngBinary.appendChunk(
+                  [0x49, 0x48, 0x44, 0x52],
+                  [
+                    (canvasSizeX >>> 24) & 0xff,
+                    (canvasSizeX >>> 16) & 0xff,
+                    (canvasSizeX >>> 8) & 0xff,
+                    canvasSizeX & 0xff, // image width : canvasSizeX
+                    (canvasSizeY >>> 24) & 0xff,
+                    (canvasSizeY >>> 16) & 0xff,
+                    (canvasSizeY >>> 8) & 0xff,
+                    canvasSizeY & 0xff, // image height : canvasSizeY
+                    0x08, // color depth : 8bit
+                    0x02, // color type  : RGB color
+                    0x00, // compression : deflate
+                    0x00, // image filter: none
+                    0x00, // inter race  : progressive
+                  ]
+                )
 
                 let canvas = []
                 for (let y = 0; y < canvasSizeY; y++) {
@@ -462,46 +434,33 @@ Comment   : ${comment.join(', ')}
                 }
 
                 const zlibHeader = [0x08, 0x1d]
-                const zlibBlockHeader = [0x01, (canvas.length >>> 0) & 0xff, (canvas.length >>> 8) & 0xff, (~canvas.length >>> 0) & 0xff, (~canvas.length >>> 8) & 0xff]
-                const zlibBlockFooter = Adler32(canvas)
-                const data = [...zlibHeader, ...zlibBlockHeader, ...canvas, ...zlibBlockFooter]
-                const pngIDATData: number[] = [
-                  (data.length >>> 24) & 0xff,
-                  (data.length >>> 16) & 0xff,
-                  (data.length >>> 8) & 0xff,
-                  data.length & 0xff, // chunk len
-                  0x49,
-                  0x44,
-                  0x41,
-                  0x54, // chunk name  : IDAT
-                  ...data, // data...
-                ]
-                const pngIDAT: Uint8Array = new Uint8Array([...pngIDATData, ...CRC32(pngIDATData.slice(4))])
+                const zlibBlocks: number[] = []
+                const zlibBlockDataMaxSize = 0xffff
+                for (let i = 0; i < canvas.length; i += zlibBlockDataMaxSize) {
+                  let isFinal = 0x00
+                  if (i + zlibBlockDataMaxSize > canvas.length) {
+                    isFinal = 0x01
+                  }
+                  const data = canvas.slice(i, Math.min(i + zlibBlockDataMaxSize, canvas.length))
+                  zlibBlocks.push(...[0x00 | isFinal, (data.length >>> 0) & 0xff, (data.length >>> 8) & 0xff, (~data.length >>> 0) & 0xff, (~data.length >>> 8) & 0xff])
+                  zlibBlocks.push(...data)
+                }
+                const zlibBlockFooter = pngBinary.Adler32(canvas)
+                const data = [...zlibHeader, ...zlibBlocks, ...zlibBlockFooter]
 
-                const pngIEND = [
-                  0x00,
-                  0x00,
-                  0x00,
-                  0x00, // chunk len   : 0
-                  0x49,
-                  0x45,
-                  0x4e,
-                  0x44, // chunk name  : IEND
-                  0xae,
-                  0x42,
-                  0x60,
-                  0x82, // CRC32
-                ]
-
-                const pngRaw: Uint8Array = new Uint8Array([...pngHeader, ...pngIHDR, ...pngIDAT, ...pngIEND])
+                const IDATSize = 0xffffff
+                for (let i = 0; i < data.length; i += IDATSize) {
+                  pngBinary.appendChunk([0x49, 0x44, 0x41, 0x54], data.slice(i, Math.min(i + IDATSize, data.length)))
+                }
 
                 async function defer() {
                   const body = new FormData()
-                  body.append(`files[0]`, new Blob([pngRaw], { type: 'image/png' }), 'color.png')
-                  const res = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`,{}, body)
+                  body.append(`files[0]`, new Blob([pngBinary.output()], { type: 'image/png' }), 'color.png')
+                  const res = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {}, body)
                   console.log(res.statusText, await res.text())
                 }
                 ctx.waitUntil(defer())
+
                 return JsonResponse({
                   type: discord.InteractionResponseType.ChannelMessageWithSource,
                   data: {
@@ -775,9 +734,10 @@ function errorResponse(message: string): Response {
 async function resourceRequest(env: Env, method: string, point: string, header: HeadersInit, body: any | null) {
   const init: RequestInit = {
     method: method,
-    headers: {
-      Authorization: `Bot ${env.TOKEN}`,
-    }||header,
+    headers:
+      {
+        Authorization: `Bot ${env.TOKEN}`,
+      } || header,
   }
   if (body != null) {
     init.body = body
@@ -844,4 +804,63 @@ function toIP(ip: number[]): string {
     ip_string.push(octet.toString(10).padStart(3, ' '))
   })
   return ip_string.join('.')
+}
+
+class Png {
+  body: number[]
+  constructor() {
+    this.body = this.fileHeader()
+  }
+
+  // Png chunk hash
+  CRC32(buf: any[], crc = 0): Uint8Array {
+    const crct = [...Array(256)].map((_, n) => [...Array(8)].reduce((c, _, k) => (c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1), n))
+    const crcNum = buf.reduce((c, x) => crct[(c ^ x) & 0xff] ^ (c >>> 8), crc ^ -1) ^ -1
+    const crcArray = new Uint8Array(4).map((_, i) => {
+      return crcNum >>> (i * 8)
+    })
+    return crcArray.reverse()
+  }
+
+  // Zlib data hash
+  Adler32(data: number[]): number[] {
+    let a = 1
+    let b = 0
+
+    for (let i = 0; i < data.length; i++) {
+      a = (a + data[i]) % 65521
+      b = (b + a) % 65521
+    }
+
+    const adler = (b << 16) | a
+    return [(adler >>> 24) & 0xff, (adler >>> 16) & 0xff, (adler >>> 8) & 0xff, (adler >>> 0) & 0xff]
+  }
+
+  fileHeader(): number[] {
+    return [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+  }
+
+  appendChunk(name: number[], data: number[]) {
+    try {
+      // length
+      this.body.push(...[(data.length >>> 24) & 0xff, (data.length >>> 16) & 0xff, (data.length >>> 8) & 0xff, data.length & 0xff])
+      // chunk type
+      this.body.push(...name)
+      // data ("Maximum call stack size exceeded" avoidance)
+      const pushSize = 0xffff
+      for (let i = 0; i < data.length; i += pushSize) {
+        this.body.push(...data.slice(i, Math.min(i + pushSize, data.length)))
+      }
+      // CRC32
+      console.log(name.toString(), '4')
+      this.body.push(...this.CRC32([...name, ...data]))
+    } catch (e) {
+      console.log(`error ${e}`)
+    }
+  }
+
+  output(): Uint8Array {
+    this.appendChunk([0x49, 0x45, 0x4e, 0x44], [])
+    return new Uint8Array(this.body)
+  }
 }
