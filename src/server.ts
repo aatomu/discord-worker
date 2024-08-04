@@ -471,7 +471,7 @@ Comment   : ${comment.join(', ')}
                         fields: [
                           {
                             name: 'Hex Color',
-                            value: `\`\`\`#${rgb[0].toString(16)}${rgb[1].toString(16)}${rgb[2].toString(16)}\`\`\``,
+                            value: `\`\`\`#${rgb[0].toString(16).padStart(2,"0")}${rgb[1].toString(16).padStart(2,"0")}${rgb[2].toString(16).padStart(2,"0")}\`\`\``,
                           },
                           {
                             name: 'Decimal Color',
