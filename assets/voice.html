@@ -5,52 +5,126 @@
 	<meta charset="utf-8">
 	<title>SpeechToText</title>
 	<style>
-		#analyze {
+		body {
+			padding: 0;
+			margin: 0;
+			width: 100vw;
+			height: 100vh;
+
+			display: flex;
+			flex-direction: column;
+			flex-wrap: nowrap;
+			justify-content: center;
+			align-items: center;
+
+			background-color: #222831;
+		}
+
+		.log {
+			width: 70vw;
+			height: 15lh;
+
+			border-radius: 1ch;
+			border-width: 2px;
+			border-style: solid;
+			background-color: #31363F;
+		}
+
+		.mic_green {
+			border-color: #B4E8C0
+		}
+
+		.mic_red {
+			border-color: #EE9494
+		}
+
+		.mic_purple {
+			border-color: #C3B9EA
+		}
+
+		.log>span:not(.temporary) {
+			color: #76ABAE;
+		}
+
+		.interface {
+			margin: 1ch;
+			padding: 1ch;
+			width: 30vw;
+
+			border-radius: 1ch;
+			background-color: #EEEEEE;
+		}
+
+		.temporary {
 			color: gray;
 		}
 	</style>
 </head>
 
 <body>
-	<div id="log">
-
+	<div id="log" class="log">
+		<span id="temporary" class="temporary">...</span>
+	</div>
+	<div class="interface">
+		<button id="enable">Enable</button><br>
+		<span id="stat">Status:</span><br>
 	</div>
 </body>
 
 <script>
-	const log = document.getElementById("log")
-	let isNew = true
 	const url = new URL(window.location.href)
 	const param = new URLSearchParams(url.searchParams)
+
 	// WebAudioAPI Call
-	SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
+	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 	const recognition = new SpeechRecognition();
-	// 対応確認
-	if ('SpeechRecognition' in window) {
-		console.log("This Blowser is Useable.")
-	} else {
-		console.log("This Blowser is UnUseable.")
-	}
-	// 言語 BCP言語タグ
-	recognition.lang = 'ja-JP';
-	// 認識途中にも
-	recognition.interimResults = true;
-	// 認識しっぱなし
 	recognition.continuous = true;
-	// 認識イベント
-	recognition.onresult = (event) => {
+	recognition.interimResults = true
+	recognition.lang = "ja-jp";
+
+	// Event:
+	// start soundstart speechstart speechend soundend end
+	recognition.addEventListener("speechstart", () => {
+		console.log("speechstart")
+		const log = document.getElementById("log")
+		log.classList.add("mic_green")
+		log.classList.remove("mic_red")
+	})
+	recognition.addEventListener("soundend", () => {
+		console.log("soundend")
+		const log = document.getElementById("log")
+		log.classList.add("mic_red")
+		log.classList.remove("mic_green")
+
+		recognition.stop()
+		recognition.start()
+	})
+	recognition.addEventListener("error", (e) => {
+		console.log("error", e)
+		const log = document.getElementById("log")
+		log.classList.add("mic_purple")
+		log.classList.remove("mic_green")
+		log.classList.remove("mic_red")
+		setStat(`Error "${e.error}"`)
+	})
+
+	recognition.addEventListener("result", (event) => {
+		const temporary = document.getElementById("temporary")
+		const log = document.getElementById("log")
 		const index = event.results.length - 1
+		const text = event.results[index][0].transcript
+
 		if (event.results[index].isFinal) {
-			const text = event.results[index][0].transcript
-			console.log("解析完了:", text);
-			if (!text) {
-				console.log("保存スキップ")
+			if (text == "") {
 				return
 			}
-			document.getElementById("analyze").innerText = text
-			document.getElementById("analyze").removeAttribute("id")
-			isNew = true
-			log.appendChild(document.createElement("br"))
+			const now = new Date()
+			console.log("解析完了:", text)
+			const logLine = document.createElement("span")
+			logLine.innerText = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}.${now.getMilliseconds().toString().substring(0, 3).padEnd(3, "0")} ${text}`
+			log.insertBefore(logLine, temporary)
+			log.insertBefore(document.createElement("br"), temporary)
+			temporary.innerText = "..."
 
 			const id = param.get("id")
 			const token = param.get("token")
@@ -67,19 +141,24 @@
 					})
 				})
 			}
-		} else {
-			if (isNew) {
-				isNew = false
-				const text = document.createElement("span")
-				text.id = "analyze"
-				log.appendChild(text)
-			}
-			console.log("認識途中:", event.results[index][0].transcript);
-			document.getElementById("analyze").innerText = event.results[index][0].transcript
-		}
-	}
 
-	recognition.start();
+			return
+		}
+
+		console.log("認識途中:", text)
+		temporary.innerText = text
+	})
+
+	document.getElementById("enable").addEventListener("click", async () => {
+		setStat("Wait permission accept")
+		await recognition.start()
+		setStat("Speech to text Ready...")
+	})
+
+	function setStat(message) {
+		const stat = document.getElementById("stat")
+		stat.innerText = `Stat: ${message}`
+	}
 </script>
 
 </html>
