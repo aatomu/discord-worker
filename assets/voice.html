@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>SpeechToText</title>
+	<style>
+		#analyze {
+			color: gray;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="log">
+
+	</div>
+</body>
+
+<script>
+	const log = document.getElementById("log")
+	let isNew = true
+	const url = new URL(window.location.href)
+	const param = new URLSearchParams(url.searchParams)
+	// WebAudioAPI Call
+	SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
+	const recognition = new SpeechRecognition();
+	// 対応確認
+	if ('SpeechRecognition' in window) {
+		console.log("This Blowser is Useable.")
+	} else {
+		console.log("This Blowser is UnUseable.")
+	}
+	// 言語 BCP言語タグ
+	recognition.lang = 'ja-JP';
+	// 認識途中にも
+	recognition.interimResults = true;
+	// 認識しっぱなし
+	recognition.continuous = true;
+	// 認識イベント
+	recognition.onresult = (event) => {
+		const index = event.results.length - 1
+		if (event.results[index].isFinal) {
+			const text = event.results[index][0].transcript
+			console.log("解析完了:", text);
+			if (!text) {
+				console.log("保存スキップ")
+				return
+			}
+			document.getElementById("analyze").innerText = text
+			document.getElementById("analyze").removeAttribute("id")
+			isNew = true
+			log.appendChild(document.createElement("br"))
+
+			const id = param.get("id")
+			const token = param.get("token")
+			if (id && token) {
+				fetch(`/voice_save`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						id: id,
+						token: token,
+						text: text
+					})
+				})
+			}
+		} else {
+			if (isNew) {
+				isNew = false
+				const text = document.createElement("span")
+				text.id = "analyze"
+				log.appendChild(text)
+			}
+			console.log("認識途中:", event.results[index][0].transcript);
+			document.getElementById("analyze").innerText = event.results[index][0].transcript
+		}
+	}
+
+	recognition.start();
+</script>
+
+</html>

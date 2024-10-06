@@ -150,6 +150,13 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
       },
     ],
   },
+  {
+    type: discord.ApplicationCommandType.ChatInput,
+    name: 'vc_link',
+    description: 'Speech to Text message initialize',
+    integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
+    contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
+  },
 ]
 
 const token = process.env.TOKEN
