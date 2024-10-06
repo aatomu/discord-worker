@@ -178,24 +178,31 @@ if (testGuildId) {
 }
 
 async function registerCommands() {
-  const response = await fetch(registerURL, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bot ${token}`,
-    },
-    method: 'PUT',
-    body: JSON.stringify(commands),
-  })
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[i]
+    console.log(`Register command: ${command.name}`)
+    const response = await fetch(registerURL, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bot ${token}`,
+      },
+      method: 'POST',
+      body: JSON.stringify(command),
+    })
 
-  if (response.ok) {
-    console.log('Registered all commands')
-  } else {
-    console.error('Error registering commands')
-    const text = await response.text()
-    console.error(text)
+    if (response.ok) {
+      console.log('Registered command')
+    } else {
+      console.error('Error registering commands')
+      const text = await response.text()
+      console.error(text)
+    }
+    await sleep(5 * 1000)
   }
-
-  return response
 }
 
 registerCommands()
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
