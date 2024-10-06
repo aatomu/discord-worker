@@ -839,9 +839,10 @@ type clip = {
 
 type speechToTextData = {
   id: string
-	token:string
+  token: string
   text: string
 }
+
 function toBin(n: number): string {
   let hex: string = n.toString(2)
   let result: string = ''
