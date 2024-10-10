@@ -10,7 +10,10 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
     type: discord.ApplicationCommandType.ChatInput,
     name: 'text2image',
     description: 'create image by stable diffusion!!',
-    options: [{ type: discord.ApplicationCommandOptionType.String, name: 'prompt', description: 'image create prompt', required: true, min_length: 5 }],
+    options: [
+      { type: discord.ApplicationCommandOptionType.String, name: 'prompt', description: 'image create prompt', required: true, min_length: 5 },
+      { type: discord.ApplicationCommandOptionType.String, name: 'negative', description: 'image create *negative* prompt', required: false, min_length: 3 },
+    ],
     integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
     contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
   },
@@ -191,7 +194,7 @@ async function registerCommands() {
     })
 
     if (response.ok) {
-      console.log(`Registered command ${i+1}/${commands.length}`)
+      console.log(`Registered command ${i + 1}/${commands.length}`)
     } else {
       console.error('Error registering commands')
       const text = await response.text()

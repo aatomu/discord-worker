@@ -1,6 +1,5 @@
 import { verifyKey } from 'discord-interactions'
 import * as discord from 'discord-api-types/v10'
-import { Ai } from '@cloudflare/ai'
 
 export interface Env {
   TOKEN: string
@@ -52,50 +51,58 @@ export default {
         if (interaction.data.type === discord.ApplicationCommandType.ChatInput) {
           switch (interaction.data.name.toLocaleLowerCase()) {
             // MARK: slash:text2image
-            // case 'text2image': {
-            //   if (!interaction.data.options) {
-            //     return errorResponse('Not enough command options')
-            //   }
+            case 'text2image': {
+              if (!interaction.data.options) {
+                return errorResponse('Not enough command options')
+              }
 
-            //   const option = interaction.data.options[0]
-            //   let prompt: string = ''
-            //   if (option.type === discord.ApplicationCommandOptionType.String) {
-            //     prompt = option.value
-            //   }
+              let prompt: string = ''
+              let negative_prompt: string = ''
+              interaction.data.options.forEach((option) => {
+                if (option.name == 'prompt' && option.type === discord.ApplicationCommandOptionType.String) {
+                  prompt = option.value
+                }
+                if (option.name == 'negative' && option.type === discord.ApplicationCommandOptionType.String) {
+                  negative_prompt = option.value
+                }
+              })
+              async function defer() {
+                const body = new FormData()
 
-            //   async function defer() {
-            //     const body = new FormData()
+                const generate = 9
 
-            //     for (let i = 0; i < 1; i++) {
-            //       console.log('aaaaa')
-            //       const response: Uint8Array = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
-            //         prompt: prompt,
-            //       })
+                const attachments: discord.RESTAPIAttachment[] = []
+                for (let i = 0; i < generate; i++) {
+                  attachments.push({ id: i })
+                }
+                const payload: discord.RESTPatchAPIInteractionFollowupJSONBody = {
+                  embeds: [
+                    {
+                      title: '__**Command Success**__',
+                      color: embedSuccess,
+                      description: `Prompt:\n \`\`\`${prompt}\`\`\``,
+                    },
+                  ],
+                  attachments: attachments,
+                }
+                body.append('payload_json', JSON.stringify(payload))
 
-            //       body.append(`files[${i}]`, new Blob([response], { type: 'image/png' }), 'image.png')
-            //     }
+                for (let i = 0; i < generate; i++) {
+                  const stream: AiTextToImageOutput = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
+                    prompt: prompt,
+                    negative_prompt: negative_prompt,
+                    height: 512,
+                    width: 512,
+                  })
+                  body.append(`files[${i}]`, new Blob([await new Response(stream).blob()], { type: 'image/png' }), 'image.png')
+                }
 
-            //     console.log('cccc')
-            //     const interactionPatch = await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, body)
-            //     console.log(interactionPatch.statusText, await interactionPatch.text())
-            //   }
-            //   ctx.waitUntil(defer())
+                await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {}, body)
+              }
+              ctx.waitUntil(defer())
 
-            //   const data: discord.APIInteractionResponseCallbackData = {
-            //     embeds: [
-            //       {
-            //         title: '__**Command Success**__',
-            //         color: embedSuccess,
-            //         description: `Prompt:\n \`\`\`${prompt}\`\`\``,
-            //       },
-            //     ],
-            //   }
-
-            //   return JsonResponse({
-            //     type: discord.InteractionResponseType.ChannelMessageWithSource,
-            //     data: data,
-            //   })
-            // }
+              return JsonResponse(interactionThinking(false))
+            }
             // MARK: slash:embed
             case 'embed': {
               return JsonResponse({
@@ -626,8 +633,7 @@ export default {
               }
 
               async function defer() {
-                const ai = new Ai(env.AI)
-                const translate = await ai.run('@cf/meta/m2m100-1.2b', {
+                const translate = await env.AI.run('@cf/meta/m2m100-1.2b', {
                   text: t.content,
                   target_lang: 'en',
                 })
@@ -651,8 +657,7 @@ export default {
               }
 
               async function defer() {
-                const ai = new Ai(env.AI)
-                const translate = await ai.run('@cf/meta/m2m100-1.2b', {
+                const translate = await env.AI.run('@cf/meta/m2m100-1.2b', {
                   text: t.content,
                   target_lang: 'ja',
                 })
@@ -755,7 +760,11 @@ export default {
     // MARK: #normal request
     switch (request.method) {
       case 'GET': {
-        return env.ASSETS.fetch(request)
+        switch (url.pathname) {
+          default: {
+            return env.ASSETS.fetch(request)
+          }
+        }
       }
       case 'POST': {
         switch (url.pathname) {
@@ -814,7 +823,7 @@ function errorResponse(message: string): Response {
   })
 }
 
-async function resourceRequest(env: Env, method: string, point: string, header: HeadersInit, body: BodyInit | null | undefined) {
+async function resourceRequest(env: Env, method: string, point: string, header: HeadersInit, body: BodyInit | null) {
   const Authorization = {
     Authorization: `Bot ${env.TOKEN}`,
   }
