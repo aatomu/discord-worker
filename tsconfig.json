@@ -7,7 +7,7 @@
     /* Modules */
     "module": "es2022",
     "moduleResolution": "node",
-    "types": ["@cloudflare/workers-types/2023-07-01"],
+    "types": ["@cloudflare/workers-types"],
     "resolveJsonModule": true,
     /* JavaScript Support */
     "allowJs": true,

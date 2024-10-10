@@ -7,14 +7,13 @@
     "register": "npx tsx src/commands.ts"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240620.0",
+    "@cloudflare/workers-types": "^4.20241004.0",
     "typescript": "^5.5.2",
     "wrangler": "^3.80.0"
   },
   "dependencies": {
-    "@cloudflare/ai": "^1.0.53",
     "discord-api-types": "^0.37.91",
-    "discord-interactions": "^4.0.0",
+    "discord-interactions": "^4.1.0",
     "node-fetch": "^3.3.2"
   }
 }
