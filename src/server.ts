@@ -625,18 +625,23 @@ export default {
                 return errorResponse('Unknown message')
               }
 
-              const ai = new Ai(env.AI)
-              const translate = await ai.run('@cf/meta/m2m100-1.2b', {
-                text: t.content,
-                target_lang: 'en',
-              })
+              async function defer() {
+                const ai = new Ai(env.AI)
+                const translate = await ai.run('@cf/meta/m2m100-1.2b', {
+                  text: t.content,
+                  target_lang: 'en',
+                })
 
-              return JsonResponse({
-                type: discord.InteractionResponseType.ChannelMessageWithSource,
-                data: {
-                  content: `https://discord.com/channels/${interaction.guild_id}/${interaction.channel.id}/${interaction.id}\n${translate.translated_text}`,
-                },
-              })
+                const body: discord.RESTPostAPIInteractionFollowupJSONBody = {
+                  content: translate.translated_text,
+                }
+                const data = JSON.stringify(body)
+                console.log(data)
+                await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, { 'Content-Type': 'application/json' }, data)
+              }
+              ctx.waitUntil(defer())
+
+              return JsonResponse(interactionThinking(false))
             }
             // MARK: message:to jp
             case 'translate to jp': {
@@ -645,18 +650,23 @@ export default {
                 return errorResponse('Unknown message')
               }
 
-              const ai = new Ai(env.AI)
-              const translate = await ai.run('@cf/meta/m2m100-1.2b', {
-                text: t.content,
-                target_lang: 'ja',
-              })
+              async function defer() {
+                const ai = new Ai(env.AI)
+                const translate = await ai.run('@cf/meta/m2m100-1.2b', {
+                  text: t.content,
+                  target_lang: 'ja',
+                })
 
-              return JsonResponse({
-                type: discord.InteractionResponseType.ChannelMessageWithSource,
-                data: {
-                  content: `https://discord.com/channels/${interaction.guild_id}/${interaction.channel.id}/${interaction.id}\n${translate.translated_text}`,
-                },
-              })
+                const body: discord.RESTPostAPIInteractionFollowupJSONBody = {
+                  content: translate.translated_text,
+                }
+                const data = JSON.stringify(body)
+                console.log(data)
+                await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, { 'Content-Type': 'application/json' }, data)
+              }
+              ctx.waitUntil(defer())
+
+              return JsonResponse(interactionThinking(false))
             }
             // MARK: message:copy
             case 'copy': {
@@ -804,7 +814,7 @@ function errorResponse(message: string): Response {
   })
 }
 
-async function resourceRequest(env: Env, method: string, point: string, header: HeadersInit, body: any | null) {
+async function resourceRequest(env: Env, method: string, point: string, header: HeadersInit, body: BodyInit | null | undefined) {
   const Authorization = {
     Authorization: `Bot ${env.TOKEN}`,
   }
@@ -812,11 +822,32 @@ async function resourceRequest(env: Env, method: string, point: string, header: 
     method: method,
     headers: Object.assign({}, Authorization, header),
   }
-  if (body != null) {
+  if (body) {
     init.body = body
   }
-  console.log(init)
-  return fetch(`${entryPoint}${point}`, init)
+
+  const url = `${entryPoint}${point}`
+  const res = await fetch(url, init).catch((e) => {
+    console.log(e)
+    return new Response(`fetch error: ${e}`, { status: -1 })
+  })
+  console.log({
+    URL: url,
+    Header: init,
+    Body: body,
+    Code: res.status,
+    Message: await res.clone().text(),
+  })
+  return res
+}
+
+function interactionThinking(isEphemeral: boolean): discord.APIInteractionResponse {
+  return {
+    type: discord.InteractionResponseType.DeferredChannelMessageWithSource,
+    data: {
+      flags: isEphemeral ? discord.MessageFlags.Ephemeral : undefined,
+    },
+  }
 }
 
 function sleep(ms: number) {
