@@ -532,7 +532,7 @@ export default {
               return JsonResponse({
                 type: discord.InteractionResponseType.ChannelMessageWithSource,
                 data: {
-                  content: 'Session Linked!',
+                  content: 'Session Creating...',
                 },
               })
             }
