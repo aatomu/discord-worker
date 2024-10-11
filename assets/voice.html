@@ -23,6 +23,7 @@
 		.log {
 			width: 70vw;
 			height: 15lh;
+			padding: 10px;
 
 			border-radius: 1ch;
 			border-width: 2px;
@@ -62,7 +63,7 @@
 		<span id="temporary" class="temporary">...</span>
 	</div>
 	<div class="interface">
-		<button id="enable">Enable</button><br>
+		<button id="enable">Enable "Speech to text"</button><br>
 		<span id="stat">Status:</span><br>
 	</div>
 </body>
@@ -88,26 +89,42 @@
 		log.classList.add("mic_green")
 		log.classList.remove("mic_red")
 	})
+
 	recognition.addEventListener("speechend", () => {
 		console.log("speechend")
 
+		const log = document.getElementById("log")
+		log.classList.remove("mic_green")
+
 		if (autoRestart) {
+			console.log("autoRestart call")
 			recognition.stop()
 
 			setTimeout(() => {
+				console.log("autoRestart run")
 				recognition.start()
-			}, 5 * 1000)
+			}, 1 * 1000)
 		}
 	})
 
 	recognition.addEventListener("error", (e) => {
 		console.log("error", e)
-		setStat(`Error "${e.error}"`)
-		autoRestart = false
 
-		const log = document.getElementById("log")
-		log.classList.add("mic_red")
-		log.classList.remove("mic_green")
+		switch (e.error) {
+			case "not-allowed", "service-not-allowed": {
+				console.log("exit by error")
+				setStat(`Error "${e.error}"`)
+				autoRestart = false
+
+				const log = document.getElementById("log")
+				log.classList.add("mic_red")
+				log.classList.remove("mic_green")
+				return
+			}
+			default: {
+				console.log("through this error")
+			}
+		}
 	})
 
 	recognition.addEventListener("result", (event) => {
@@ -121,7 +138,7 @@
 				return
 			}
 			const now = new Date()
-			console.log("解析完了:", text)
+			console.log("finish :", text)
 			const logLine = document.createElement("span")
 			logLine.innerText = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}.${now.getMilliseconds().toString().substring(0, 3).padEnd(3, "0")} ${text}`
 			log.insertBefore(logLine, temporary)
@@ -147,7 +164,7 @@
 			return
 		}
 
-		console.log("認識途中:", text)
+		console.log("analyze:", text)
 		temporary.innerText = text
 	})
 
