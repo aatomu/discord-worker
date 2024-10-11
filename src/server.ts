@@ -71,6 +71,20 @@ export default {
 
                 const generate = 9
 
+                const time = []
+                for (let i = 0; i < generate; i++) {
+                  const startTime = Date.now()
+                  // @ts-ignore
+                  const stream: AiTextToImageOutput = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
+                    prompt: prompt,
+                    negative_prompt: negative_prompt,
+                    height: 512,
+                    width: 512,
+                  })
+                  body.append(`files[${i}]`, new Blob([await new Response(stream).blob()], { type: 'image/png' }), 'image.png')
+                  time.push(Date.now() - startTime)
+                }
+
                 const attachments: discord.RESTAPIAttachment[] = []
                 for (let i = 0; i < generate; i++) {
                   attachments.push({ id: i })
@@ -80,22 +94,12 @@ export default {
                     {
                       title: '__**Command Success**__',
                       color: embedSuccess,
-                      description: `Prompt:\n \`\`\`${prompt}\`\`\``,
+                      description: `Prompt:\n` + `\`\`\`${prompt}\`\`\`\n` + `Negative:\n` + `\`\`\`${negative_prompt === '' ? 'None' : negative_prompt}\`\`\`\n` + `Time[ms]:\n` + `\`\`\`${JSON.stringify(time)}\`\`\``,
                     },
                   ],
                   attachments: attachments,
                 }
                 body.append('payload_json', JSON.stringify(payload))
-
-                for (let i = 0; i < generate; i++) {
-                  const stream: AiTextToImageOutput = await env.AI.run('@cf/bytedance/stable-diffusion-xl-lightning', {
-                    prompt: prompt,
-                    negative_prompt: negative_prompt,
-                    height: 512,
-                    width: 512,
-                  })
-                  body.append(`files[${i}]`, new Blob([await new Response(stream).blob()], { type: 'image/png' }), 'image.png')
-                }
 
                 await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {}, body)
               }
