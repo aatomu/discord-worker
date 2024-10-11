@@ -150,7 +150,9 @@
 			logLine.innerText = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}.${now.getMilliseconds().toString().substring(0, 3).padEnd(3, "0")} ${text}`
 			log.insertBefore(logLine, temporary)
 			log.insertBefore(document.createElement("br"), temporary)
+
 			temporary.innerText = "..."
+			log.scrollTop = log.scrollHeight;
 
 			const id = param.get("id")
 			const token = param.get("token")
