@@ -29,6 +29,8 @@
 			border-width: 2px;
 			border-style: solid;
 			background-color: #31363F;
+
+			overflow-y: scroll;
 		}
 
 		.mic_green {
@@ -83,7 +85,7 @@
 	// Event:
 	// start soundstart speechstart speechend soundend end
 	recognition.addEventListener("speechstart", () => {
-		console.log("speechstart")
+		console.log("Event: speechstart")
 
 		const log = document.getElementById("log")
 		log.classList.add("mic_green")
@@ -91,24 +93,24 @@
 	})
 
 	recognition.addEventListener("speechend", () => {
-		console.log("speechend")
+		console.log("Event: speechend")
 
 		const log = document.getElementById("log")
 		log.classList.remove("mic_green")
 
 		if (autoRestart) {
-			console.log("autoRestart call")
+			console.log("Restart: call")
 			recognition.stop()
 
 			setTimeout(() => {
-				console.log("autoRestart run")
+				console.log("Restart: run")
 				recognition.start()
 			}, 1 * 1000)
 		}
 	})
 
 	recognition.addEventListener("error", (e) => {
-		console.log("error", e)
+		console.log("Event: error", e)
 
 		switch (e.error) {
 			case "not-allowed", "service-not-allowed": {
@@ -122,7 +124,8 @@
 				return
 			}
 			default: {
-				console.log("through this error")
+				console.log("Error: through this error")
+				recognition.dispatchEvent(new Event("speechend"));
 			}
 		}
 	})
@@ -131,14 +134,18 @@
 		const temporary = document.getElementById("temporary")
 		const log = document.getElementById("log")
 		const index = event.results.length - 1
-		const text = event.results[index][0].transcript
+		const results = []
+		for (let i = 0; i < event.results[index].length; i++) {
+			results.push(event.results[index][i].transcript)
+		}
+		const text = results.join("")
 
 		if (event.results[index].isFinal) {
 			if (text == "") {
 				return
 			}
 			const now = new Date()
-			console.log("finish :", text)
+			console.log(`Recognition: \"${text}\"`)
 			const logLine = document.createElement("span")
 			logLine.innerText = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}.${now.getMilliseconds().toString().substring(0, 3).padEnd(3, "0")} ${text}`
 			log.insertBefore(logLine, temporary)
@@ -164,7 +171,7 @@
 			return
 		}
 
-		console.log("analyze:", text)
+		console.log(`Recognition: \"${text}\"?`)
 		temporary.innerText = text
 	})
 
