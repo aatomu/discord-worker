@@ -38,10 +38,6 @@
 			border-color: #EE9494
 		}
 
-		.mic_purple {
-			border-color: #C3B9EA
-		}
-
 		.log>span:not(.temporary) {
 			color: #76ABAE;
 		}
@@ -74,6 +70,7 @@
 <script>
 	const url = new URL(window.location.href)
 	const param = new URLSearchParams(url.searchParams)
+	let autoRestart = true
 
 	// WebAudioAPI Call
 	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -86,26 +83,31 @@
 	// start soundstart speechstart speechend soundend end
 	recognition.addEventListener("speechstart", () => {
 		console.log("speechstart")
+
 		const log = document.getElementById("log")
 		log.classList.add("mic_green")
 		log.classList.remove("mic_red")
 	})
-	recognition.addEventListener("soundend", () => {
-		console.log("soundend")
+	recognition.addEventListener("speechend", () => {
+		console.log("speechend")
+
+		if (autoRestart) {
+			recognition.stop()
+
+			setTimeout(() => {
+				recognition.start()
+			}, 5 * 1000)
+		}
+	})
+
+	recognition.addEventListener("error", (e) => {
+		console.log("error", e)
+		setStat(`Error "${e.error}"`)
+		autoRestart = false
+
 		const log = document.getElementById("log")
 		log.classList.add("mic_red")
 		log.classList.remove("mic_green")
-
-		recognition.stop()
-		recognition.start()
-	})
-	recognition.addEventListener("error", (e) => {
-		console.log("error", e)
-		const log = document.getElementById("log")
-		log.classList.add("mic_purple")
-		log.classList.remove("mic_green")
-		log.classList.remove("mic_red")
-		setStat(`Error "${e.error}"`)
 	})
 
 	recognition.addEventListener("result", (event) => {
