@@ -7,9 +7,9 @@
     "register": "npx tsx src/commands.ts"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241004.0",
+    "@cloudflare/workers-types": "^4.20250810.0",
     "typescript": "^5.5.2",
-    "wrangler": "^3.80.0"
+    "wrangler": "^4.28.1"
   },
   "dependencies": {
     "discord-api-types": "^0.37.91",
