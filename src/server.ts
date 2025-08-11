@@ -547,6 +547,32 @@ export default {
                 },
               })
             }
+            // MARK: slash:gpt
+            case 'gpt': {
+              return JsonResponse({
+                type: discord.InteractionResponseType.Modal,
+                data: {
+                  title: "GPT' Question",
+                  custom_id: 'gpt_question',
+                  components: [
+                    {
+                      type: discord.ComponentType.ActionRow,
+                      components: [
+                        {
+                          type: discord.ComponentType.TextInput,
+                          custom_id: 'question',
+                          label: 'Question',
+                          style: discord.TextInputStyle.Paragraph,
+                          min_length: 1,
+                          max_length: 2048,
+                          required: true,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              })
+            }
           }
         }
         // User
@@ -637,10 +663,10 @@ export default {
               }
 
               async function defer() {
-                const translate = await env.AI.run('@cf/meta/m2m100-1.2b', {
+                const translate:AiTranslationOutput = await env.AI.run('@cf/meta/m2m100-1.2b', {
                   text: t.content,
                   target_lang: 'en',
-                })
+                }) as unknown as AiTranslationOutput
 
                 const body: discord.RESTPostAPIInteractionFollowupJSONBody = {
                   content: translate.translated_text,
@@ -661,12 +687,13 @@ export default {
               }
 
               async function defer() {
-                const translate = await env.AI.run('@cf/meta/m2m100-1.2b', {
+                const translate:AiTranslationOutput = await env.AI.run('@cf/meta/m2m100-1.2b', {
                   text: t.content,
                   target_lang: 'ja',
-                })
+                }) as unknown as AiTranslationOutput
 
-                const body: discord.RESTPostAPIInteractionFollowupJSONBody = {
+
+								const body: discord.RESTPostAPIInteractionFollowupJSONBody = {
                   content: translate.translated_text,
                 }
                 const data = JSON.stringify(body)
@@ -753,6 +780,54 @@ export default {
                 ],
               },
             })
+          }
+          // MARK: modal:gpt_question
+          case 'gpt_question': {
+            let config: { [k: string]: string } = {}
+            interaction.data.components.forEach((row) => {
+              const data = row.components[0]
+              config[data.custom_id] = data.value
+            })
+
+            async function defer() {
+              const body = new FormData()
+
+              // @ts-ignore
+              const response = await env.AI.run('@cf/openai/gpt-oss-20b', {
+                input: config['question']+"\n\nAnswer in less than 2000 characters.",
+              }) as any
+
+							const payload: discord.RESTPatchAPIInteractionFollowupJSONBody = {
+                embeds: [
+                  {
+                    title: "__**GPT's Question**__",
+                    color: embedSuccess,
+                    description: `#***Question:***:\n` + `\`\`\`${config['question']}\`\`\`\n` + `#***Answer:***\n` + `${response.output.filter((el:any) => el.type==="message")[0].content[0].text}`,
+                  },
+                ]
+              }
+              body.append('payload_json', JSON.stringify(payload))
+
+              await resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {}, body).
+							catch(() => {
+								const body = new FormData()
+								const payload: discord.RESTPatchAPIInteractionFollowupJSONBody = {
+									embeds: [
+										{
+											title: "__**GPT's Question**__",
+											color: embedError,
+											description: `#***Question:***:\n` + `\`\`\`${config['question']}\`\`\`\n` + `#***Answer:***\n` + `null\n`,
+										},
+									]
+								}
+								body.append('payload_json', JSON.stringify(payload))
+
+								resourceRequest(env, 'PATCH', `/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {}, body)
+							})
+            }
+            ctx.waitUntil(defer())
+
+            return JsonResponse(interactionThinking(false))
           }
         }
       }

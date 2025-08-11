@@ -160,6 +160,13 @@ export const commands: discord.RESTPutAPIApplicationCommandsJSONBody = [
     integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
     contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
   },
+	{
+    type: discord.ApplicationCommandType.ChatInput,
+    name: 'gpt',
+    description: 'Openai gpt-oss-20b',
+    integration_types: [discord.ApplicationIntegrationType.GuildInstall, discord.ApplicationIntegrationType.UserInstall],
+    contexts: [discord.InteractionContextType.Guild, discord.InteractionContextType.BotDM, discord.InteractionContextType.PrivateChannel],
+  },
 ]
 
 const token = process.env.TOKEN
