@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Angle Master Pro</title>
+    <script src="https://unpkg.com/@discord/embedded-app-sdk"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.8);
+            --sky-400: #38bdf8;
+            --emerald-400: #34d399;
+            --red-400: #f87171;
+            --yellow-400: #fbbf24;
+            --slate-400: #94a3b8;
+            --slate-700: #334155;
+            --slate-900: #020617;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'JetBrains Mono', monospace, sans-serif;
+            overflow-x: hidden;
+            touch-action: none; /* ブラウザのスクロールやズームを防止 */
+        }
+
+        /* コンテナのレスポンシブ設定 */
+        .app-container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        /* 画面が広い時は横並びに */
+        @media (min-width: 800px) {
+            .game-layout {
+                flex-direction: row;
+                align-items: flex-start;
+                max-width: 900px;
+            }
+            .sidebar { max-width: 300px; }
+        }
+
+        h1 { font-size: 2.5rem; color: var(--sky-400); margin: 0; font-style: italic; }
+        .label-text { font-size: 0.7rem; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.15em; font-weight: bold; }
+
+        /* 入力とボタン */
+        .input-field {
+            background: var(--slate-900);
+            border: 2px solid var(--slate-700);
+            border-radius: 1rem;
+            color: var(--emerald-400);
+            padding: 1rem;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            border: none;
+            font-weight: 800;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-sky { background: #0284c7; color: white; }
+        .btn-sky:hover { background: #0369a1; }
+        .btn:active { transform: scale(0.96); }
+
+        /* 可変ダイヤルコンテナ */
+        .dial-wrapper {
+            position: relative;
+            width: min(75vw, 280px);
+            height: min(75vw, 280px);
+            margin: 20px auto;
+        }
+
+        .dial-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            border: 4px solid var(--slate-700);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .needle {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 2px;
+            height: 45%;
+            background: var(--sky-400);
+            transform-origin: bottom center;
+            z-index: 30;
+            pointer-events: none;
+        }
+
+        .target-indicator {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 4px;
+            height: 48%;
+            background: rgba(248, 113, 113, 0.6);
+            transform-origin: bottom center;
+            z-index: 25;
+        }
+
+        .tick { position: absolute; bottom: 50%; left: 50%; width: 1px; height: 5%; background: var(--slate-700); transform-origin: bottom center; }
+        .tick-large { height: 10%; width: 2px; background: var(--slate-400); }
+
+        .view-hidden { display: none !important; }
+
+        /* スコア表示 */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .target-box { background: var(--slate-900); padding: 10px; border-radius: 1rem; border: 1px solid var(--slate-700); }
+        .target-val { font-size: 2.5rem; font-weight: 900; color: var(--red-400); }
+
+        /* 履歴カード */
+        .history-list { max-height: 200px; overflow-y: auto; text-align: left; }
+        .history-item {
+            background: rgba(0,0,0,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+            border-left: 3px solid var(--sky-400);
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <div id="view-start" class="glass-panel">
+        <h1>ANGLE MASTER</h1>
+        <p class="label-text">Precision Challenge</p>
+        <div style="margin: 2rem 0;">
+            <label class="label-text">Game Seed</label>
+            <input id="start-seed-input" type="text" maxlength="6" placeholder="RANDOM" class="input-field">
+        </div>
+        <button id="start-game-btn" class="btn btn-sky">GAME START</button>
+    </div>
+
+    <div id="view-game" class="view-hidden app-container game-layout">
+        <div class="glass-panel">
+            <div class="stats-grid">
+                <div><span class="label-text">Score</span><br><b id="game-total-score">0</b></div>
+                <div><span class="label-text">Round</span><br><b id="game-round-display">1/5</b></div>
+                <div><span class="label-text">Seed</span><br><small id="game-seed-display">---</small></div>
+            </div>
+
+            <div class="target-box">
+                <span class="label-text">Target Angle</span>
+                <div class="target-val"><span id="target-angle">--</span>°</div>
+            </div>
+
+            <div class="dial-wrapper" id="dial">
+                <div class="dial-container">
+                    <div id="ticks-container"></div>
+                    <div class="target-indicator view-hidden" id="target-marker"></div>
+                    <div class="needle" id="needle"></div>
+                    <div style="position:absolute; top:50%; left:50%; width:8px; height:8px; background:white; border-radius:50%; transform:translate(-50%,-50%); z-index:40;"></div>
+                </div>
+            </div>
+
+            <button id="submit-btn" class="btn btn-sky">決定</button>
+        </div>
+
+        <div class="glass-panel sidebar">
+            <p class="label-text" style="margin-bottom:10px;">Round History</p>
+            <div id="history-list" class="history-list">
+                </div>
+        </div>
+    </div>
+
+    <div id="view-result" class="view-hidden glass-panel">
+        <p class="label-text">Final Score</p>
+        <div style="font-size: 5rem; font-weight: 900; color: var(--yellow-400); margin: 10px 0;" id="final-score">0</div>
+        <button id="restart-btn" class="btn btn-sky">PLAY AGAIN</button>
+    </div>
+
+</div>
+
+<script>
+    // Discord Activity SDKの初期化（エラー回避のためtry-catch）
+    try {
+        const discordSdk = new DiscordSDK(null); // クライアントIDはPortalで設定
+        discordSdk.ready();
+    } catch(e) { console.log("Discord SDK not detected"); }
+
+    let state = {
+        view: 'start',
+        currentRound: 1,
+        maxRounds: 5,
+        totalScore: 0,
+        targetAngle: 0,
+        currentAngle: 180,
+        isDragging: false,
+        isActive: false,
+        history: []
+    };
+
+    const views = { start: document.getElementById('view-start'), game: document.getElementById('view-game'), result: document.getElementById('view-result') };
+    const dial = document.getElementById('dial');
+    const needle = document.getElementById('needle');
+    const historyList = document.getElementById('history-list');
+
+    function switchView(name) {
+        Object.keys(views).forEach(k => views[k].classList.add('view-hidden'));
+        views[name].classList.remove('view-hidden');
+    }
+
+    function initRound() {
+        state.isActive = true;
+        state.targetAngle = Math.floor(Math.random() * 3600) / 10;
+        document.getElementById('target-angle').textContent = state.targetAngle.toFixed(1);
+        document.getElementById('target-marker').classList.add('view-hidden');
+        document.getElementById('game-round-display').textContent = `${state.currentRound}/${state.maxRounds}`;
+        document.getElementById('game-total-score').textContent = state.totalScore;
+
+        state.currentAngle = 180;
+        updateNeedle();
+    }
+
+    function updateNeedle() {
+        needle.style.transform = `translateX(-50%) rotate(${state.currentAngle}deg)`;
+    }
+
+    document.getElementById('start-game-btn').addEventListener('click', () => {
+        state.totalScore = 0;
+        state.currentRound = 1;
+        state.history = [];
+        historyList.innerHTML = '';
+        initRound();
+        switchView('game');
+    });
+
+    document.getElementById('submit-btn').addEventListener('click', () => {
+        if(!state.isActive) return;
+        state.isActive = false;
+
+        const marker = document.getElementById('target-marker');
+        marker.style.transform = `translateX(-50%) rotate(${state.targetAngle}deg)`;
+        marker.classList.remove('view-hidden');
+
+        let diff = Math.abs(state.currentAngle - state.targetAngle);
+        if (diff > 180) diff = 360 - diff;
+        const roundPoints = Math.max(0, Math.round(200 - (diff * 10)));
+        state.totalScore += roundPoints;
+
+        // 履歴追加
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `<span>R${state.currentRound}: ${state.currentAngle}°</span> <b>+${roundPoints}</b>`;
+        historyList.prepend(item);
+
+        setTimeout(() => {
+            if(state.currentRound < state.maxRounds) {
+                state.currentRound++;
+                initRound();
+            } else {
+                document.getElementById('final-score').textContent = state.totalScore;
+                switchView('result');
+            }
+        }, 1500);
+    });
+
+    // 角度計算ロジック（リサイズに対応）
+    function handleMove(e) {
+        if (!state.isActive) return;
+        const rect = dial.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const dx = clientX - centerX;
+        const dy = clientY - centerY;
+        let deg = Math.atan2(dx, -dy) * (180 / Math.PI);
+        if (deg < 0) deg += 360;
+
+        state.currentAngle = Math.round(deg * 10) / 10;
+        updateNeedle();
+    }
+
+    // イベント登録（マウス・タッチ共通）
+    const onStart = (e) => { state.isDragging = true; handleMove(e); };
+    const onMove = (e) => { if(state.isDragging) { handleMove(e); e.preventDefault(); } };
+    const onEnd = () => { state.isDragging = false; };
+
+    dial.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    dial.addEventListener('touchstart', onStart, {passive: false});
+    window.addEventListener('touchmove', onMove, {passive: false});
+    window.addEventListener('touchend', onEnd);
+
+    // 目盛りの生成
+    const ticksContainer = document.getElementById('ticks-container');
+    for (let i = 0; i < 360; i += 10) {
+        const tick = document.createElement('div');
+        tick.className = i % 90 === 0 ? 'tick tick-large' : 'tick';
+        tick.style.transform = `translateX(-50%) rotate(${i}deg)`;
+        ticksContainer.appendChild(tick);
+    }
+
+    document.getElementById('restart-btn').addEventListener('click', () => switchView('start'));
+</script>
+
+</body>
+</html>
